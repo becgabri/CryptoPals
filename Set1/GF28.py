@@ -83,7 +83,7 @@ class GF28:
                 #TODO this value should never be over the modulus -- check this
                 if (res >= (1 << (modulus_integer_GF28.bit_length() - 1))):
                     raise ValueError("Unexpected break from expectation: result in multiplication should never be over the modulus")
-                    res = res ^ modulus_integer_GF28
+                    #res = res ^ modulus_integer_GF28
         return GF28(res, bypass_modcheck=True)
 
     def inverse(self):
