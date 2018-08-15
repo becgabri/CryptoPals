@@ -165,6 +165,19 @@ def fill_state_array(text):
         quot_rem = divmod(idx, 4)
         state_arr[idx] = text[quot_rem[1] * 4 + quot_rem[0]]
     return state_arr
+#to do, integrate this into aes encryption function
+def unscramble_state(state_arr):
+    state_output = [GF28.GF28(0)] * 16
+    for idx, GF28_elt in enumerate(state_arr):
+        quot_rem = divmod(idx, 4)
+        state_output[quot_rem[1] * 4 + quot_rem[0]] = state_arr[idx]
+    return state_output
+
+def GF28_to_string(list_GF28):
+    res = []
+    for elt in list_GF28:
+        res.append(chr(elt.number))
+    return "".join(res)
 
 def restructure_output(state_arr):
     string_output = [""] * 16
@@ -174,8 +187,8 @@ def restructure_output(state_arr):
     return "".join(string_output)
 
 # right now only 128 bit keys are accepted
-# the plaintext MUST be 16 bytes long (as is true with all AES algorithms)
-# returns the cipher text as a string
+# key and plaintext must be arrays of GF28 elts
+# returns the cipher text as an array of GF28 elts
 def encrypt_aes(key, plaintext):
     key_padd = key_expansion(key)
     state = fill_state_array(plaintext)
@@ -191,8 +204,9 @@ def encrypt_aes(key, plaintext):
     state = shift_rows(state)
     state = add_round_key(state, key_padd[ROUNDS * (4 * BYTES_PER_WORD):])
 
-    return restructure_output(state)
-
+    return unscramble_state(state)
+# key and ciphertext MUST be arrays of GF28 elts
+# returns plaintext as an array of GF28 elts
 def decrypt_aes(key, ciphertext):
     key_padd = key_expansion(key)
     state = fill_state_array(ciphertext)
@@ -208,19 +222,31 @@ def decrypt_aes(key, ciphertext):
     state = inv_shift_rows(state)
     state = add_round_key(state, key_padd[0:(4 * BYTES_PER_WORD)])
 
-    return restructure_output(state)
+    return unscramble_state(state)
 
-def modify_key_into_GF28(original_key):
-    modified_key = []
-    if isinstance(original_key, bytes) or isinstance(original_key, bytearray):
-        for i in range(len(original_key)):
-            modified_key.append(GF28.GF28(original_key[i]))
-    elif isinstance(original_key, str):
-        for i in range(len(original_key)):
-            modified_key.append(GF28.GF28(ord(original_key[i])))
+def modify_list_into_GF28(original_list):
+    modified_list = []
+    if isinstance(original_list, bytes) or isinstance(original_list, bytearray):
+        for i in range(len(original_list)):
+            modified_list.append(GF28.GF28(original_list[i]))
+    elif isinstance(original_list, str):
+        for i in range(len(original_list)):
+            modified_list.append(GF28.GF28(ord(original_list[i])))
     else:
-        raise TypeError("key is of an unsupported type")
-    return modified_key
+        raise TypeError("input is of an unsupported type")
+    return modified_list
+
+def modify_IV_into_GF28(text_IV):
+    # we only accept a string for this that is an integer (between 0 and 255)
+    # each integer should be delimited by dashes (i.e. -) and there should be 16
+    # integers
+    result_in_GF28 = []
+    values = text_IV.split('-')
+    if (len(values)) != 16:
+        raise ValueError("IV is not correct length for AES")
+    for let in values:
+        result_in_GF28.append(GF28.GF28(int(let)))
+    return result_in_GF28
 
 # Plain Text is arbitrary length
 # encryption_alg is a function that has signature
@@ -229,17 +255,8 @@ def modify_key_into_GF28(original_key):
 def encryption_mode_ECB(key, plaintext, encryption_alg):
     # uses PKCS 7 padding
     # modify key and plaintext
-    plaintext_in_GF28 = []
-    key_in_GF28 = modify_key_into_GF28(key)
-
-    if isinstance(plaintext, str):
-        for idx,char in enumerate(plaintext):
-             plaintext_in_GF28.append(GF28.GF28(ord(char)))
-    elif isinstance(plaintext, bytes) or isinstance(plaintext, bytearray):
-        for idx, char in enumerate(plaintext):
-             plaintext_in_GF28.append(GF28.GF28(char))
-    else:
-        raise TypeError("plaintext is of an unsupported type")
+    plaintext_in_GF28 = modify_list_into_GF28(plaintext)
+    key_in_GF28 = modify_list_into_GF28(key)
 
     ciphertext = ""
     for block in range(0, len(plaintext_in_GF28), 16):
@@ -248,44 +265,68 @@ def encryption_mode_ECB(key, plaintext, encryption_alg):
             # padd out the text to the correct size
             padding = 16 - len(segment)
             segment += (chr(padding) * padding)
-        ciphertext += encryption_alg(key_in_GF28, segment)
+        ciphertext += GF28_to_string(encryption_alg(key_in_GF28, segment))
     return ciphertext
 
 # ciphertext IS a multiple of 16
 def decryption_mode_ECB(key, ciphertext, decryption_alg):
     plaintext = ""
-    ciphertext_in_GF28 = []
-    key_in_GF28 = []
-
-    if isinstance(key, bytes) or isinstance(key, bytearray):
-        for i in range(len(key)):
-            key_in_GF28.append(GF28.GF28(key[i]))
-    elif isinstance(key, str):
-        for i in range(len(key)):
-            key_in_GF28.append(GF28.GF28(ord(key[i])))
-    else:
-        raise TypeError("key is of an unsupported type")
-
-    if isinstance(ciphertext, str):
-        for idx,char in enumerate(ciphertext):
-             ciphertext_in_GF28.append(GF28.GF28(ord(char)))
-    elif isinstance(ciphertext, bytes) or isinstance(ciphertext, bytearray):
-        for idx, char in enumerate(ciphertext):
-             ciphertext_in_GF28.append(GF28.GF28(char))
-    else:
-        raise TypeError("ciphertext is of an unsupported type")
+    ciphertext_in_GF28 = modify_list_into_GF28(ciphertext)
+    key_in_GF28 = modify_list_into_GF28(key)
     for block in range(0, len(ciphertext_in_GF28), 16):
-        plaintext += decryption_alg(key_in_GF28, ciphertext_in_GF28[block: block + 16])
+        plaintext += GF28_to_string(decryption_alg(key_in_GF28, ciphertext_in_GF28[block: block + 16]))
+    return plaintext
+
+# Requires: encryption alg is a function with signature
+# (key, text), it should also return a string of
+def ENCRYPTION_CBC_MODE(IV, key, text, encryption_alg):
+    # modify key and plaintext
+    plaintext_in_GF28 = modify_list_into_GF28(text)
+    # use PKCS 7 padding
+    padding = 16 - (len(plaintext_in_GF28) % 16)
+    plaintext_in_GF28.extend([GF28.GF28(padding)] * padding)
+
+    key_in_GF28 = modify_list_into_GF28(key)
+    IV_in_GF28 = modify_IV_into_GF28(IV)
+
+    iteration = IV_in_GF28
+
+    ciphertext = ""
+    for block in range(0, len(plaintext_in_GF28), 16):
+        segment = plaintext_in_GF28[block:block + 16]
+
+        for it in range(len(segment)):
+            iteration[it] = segment[it] + iteration[it]
+        iteration = encryption_alg(key_in_GF28, iteration)
+        ciphertext += GF28_to_string(iteration)
+    return ciphertext
+
+def DECRYPTION_CBC_MODE(IV, key, text, decryption_alg):
+    ciphertext_in_GF28 = modify_list_into_GF28(text)
+    IV_in_GF28 = modify_IV_into_GF28(IV)
+    key_in_GF28 = modify_list_into_GF28(key)
+    plaintext = ""
+
+    for block in range(0, len(ciphertext_in_GF28), 16):
+        previous_segment = ciphertext_in_GF28[block - 16:block] if block >= 16 else IV_in_GF28
+        segment = ciphertext_in_GF28[block: block + 16]
+        res = decryption_alg(key_in_GF28, segment)
+        for idx, elt in enumerate(res):
+            res[idx] = res[idx] + previous_segment[idx]
+        plaintext += GF28_to_string(res)
     return plaintext
 
 
-def main(inputFile, keyFile, mode, type):
+def main(inputFile, keyFile, mode, type, isBase64):
     key = ""
     input_text = ""
     if not os.path.exists(inputFile) or not os.path.exists(keyFile):
         raise OSError("Path not found")
     with open(inputFile, 'r') as in_f:
-        input_text = base64.b64decode(in_f.read())
+        if type == 'decrypt' and isBase64:
+            input_text = base64.b64decode(in_f.read())
+        else:
+            input_text = in_f.read()
     with open(keyFile, 'r') as in_key:
         key = in_key.read().strip('\n')
     if mode == "ECB":
@@ -293,11 +334,33 @@ def main(inputFile, keyFile, mode, type):
             raise ValueError('Key needs to be length 16')
         if type == "encrypt":
             res = encryption_mode_ECB(key, input_text, encrypt_aes)
-            print(res)
+            if isBase64:
+                print(base64.b64encode(res))
+            else:
+                print(res)
         else:
             res = decryption_mode_ECB(key, input_text, decrypt_aes)
             print(res)
-            #print(base64.b64decode(res))
+    elif mode == "CBC":
+        print("Please provide an input file for IV")
+        iv_f = input("IV File:")
+        iv_input = ""
+        if not os.path.exists(iv_f):
+            raise OSError("IV file does not exist")
+        with open(iv_f, 'r') as input_file:
+            iv_input = input_file.read()
+            iv_input.strip()
+            #if len(iv_input) != 16:
+            #    raise ValueError("IV input is not correct length for AES")
+        if type == "encrypt":
+            res = ENCRYPTION_CBC_MODE(iv_input, key, input_text, encrypt_aes)
+            if isBase64:
+                print(base64.b64encode(res))
+            else:
+                print(res)
+        else:
+            res = DECRYPTION_CBC_MODE(iv_input, key, input_text, decrypt_aes)
+            print(res)
     else:
         print("Mode {} has not been implemeted".format(mode))
         return
@@ -305,12 +368,13 @@ def main(inputFile, keyFile, mode, type):
 if __name__ == "__main__":
     try:
         input_file = ""
+        b64 = False
         mode = ""
         type = ""
         key = ""
-        opts, other_args = getopt.getopt(sys.argv[1:], 'i:m:t:k:')
+        opts, other_args = getopt.getopt(sys.argv[1:], 'bi:m:t:k:')
     except getopt.GetoptError:
-        print("Format is python3 {} -i [input_file] -k [key file] -m [mode (ex.ECB)] -t [encrypt/decrypt]".format(sys.argv[0]))
+        print("Format is python3 {} -i [input_file] -k [key file] -m [mode (ex. ECB)] -t [encrypt/decrypt] [-b]".format(sys.argv[0]))
         sys.exit(1)
     for opt, arg in opts:
         if opt in ("-i", "--inputFile"):
@@ -321,7 +385,9 @@ if __name__ == "__main__":
             type = arg
         elif opt in ("-k", "--key"):
             key = arg
+        elif opt in ("-b", "--base64"):
+            b64 = True
     if input_file == "" or mode == "" or type =="":
-        print("Format is python3 {} -i [input_file] -k [key file] -m [mode (ex.ECB)] -t [encrypt/decrypt]".format(sys.argv[0]))
+        print("Format is python3 {} -i [input_file] -k [key file] -m [mode (ex. ECB)] -t [encrypt/decrypt] [-b]".format(sys.argv[0]))
         sys.exit(1)
-    main(input_file, key, mode, type)
+    main(input_file, key, mode, type, b64)

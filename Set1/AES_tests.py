@@ -226,9 +226,9 @@ class Bit128Test(unittest.TestCase):
         for let in plaintext:
             plaintext_in_GF28.append(GF28.GF28(ord(let)))
         key = [GF28.GF28(0)] * 16
-        cipher_text = CryptoPals7.encrypt_aes(key, plaintext_in_GF28)
-        cipher_text_GF28 = [GF28.GF28(ord(let)) for let in cipher_text]
+        cipher_text_GF28 = CryptoPals7.encrypt_aes(key, plaintext_in_GF28)
         res_dec = CryptoPals7.decrypt_aes(key, cipher_text_GF28)
+        res_dec = CryptoPals7.GF28_to_string(res_dec)
         # TODO change to string at end or byte array (just not GF28)
         self.assertEqual(res_dec, plaintext)
 
@@ -239,9 +239,10 @@ class Bit128Test(unittest.TestCase):
             plaintext_in_GF28.append(GF28.GF28(ord(let)))
         key = [GF28.GF28(3)] * 15
         key.append(GF28.GF28(4))
-        cipher_text = CryptoPals7.encrypt_aes(key, plaintext_in_GF28)
-        cipher_text_GF28 = [GF28.GF28(ord(let)) for let in cipher_text]
+        cipher_text_GF28 = CryptoPals7.encrypt_aes(key, plaintext_in_GF28)
         res_dec = CryptoPals7.decrypt_aes(key, cipher_text_GF28)
+        res_dec = CryptoPals7.GF28_to_string(res_dec)
+
         # TODO change to string at end or byte array (just not GF28)
         self.assertEqual(res_dec, plaintext)
 
@@ -283,6 +284,24 @@ class KeyExpandTest(unittest.TestCase):
         some_exp_key = CryptoPals7.key_expansion(small_key)
         for ind in range(len(beginning_of_expanded_key)):
             self.assertEqual(exp_key_in_GF28[ind], some_exp_key[ind])
+
+class CBCTest(unittest.TestCase):
+    def setUp(self):
+        def custom_equal(a,b,msg=None):
+            if a.number != b.number:
+                raise self.failureException(str(a.number) + " != " + str(b.number) + " at index ")
+            else:
+                return True
+        self.addTypeEqualityFunc(GF28.GF28, custom_equal)
+    def test_CBC(self):
+        key = 'Apple Apple. And'
+        text = 'Perseverance manPerseverance man'
+        IV = '0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0'
+        ciphertext = CryptoPals7.ENCRYPTION_CBC_MODE(IV, key, text, CryptoPals7.encrypt_aes)
+        plaintext = CryptoPals7.DECRYPTION_CBC_MODE(IV, key, ciphertext, CryptoPals7.decrypt_aes)
+        # only checks the beginning
+        for idx, let in enumerate(text):
+            self.assertEqual(plaintext[idx], text[idx])
 
 
 if __name__ == "__main__":
