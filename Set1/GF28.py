@@ -6,16 +6,10 @@ modulus_integer_GF28 = int.from_bytes(modulus_GF28, byteorder='big')
 # of num_a and num_b WITH NO CARRY
 def xor_multiply_base_2(num_a, num_b):
     res = 0
-    #larger_num = num_a if (num_a > num_b) else num_b
-    #smaller_num = num_b if (num_b < num_a) else num_a
-    #int_vers_a = int.from_bytes(num_a, byteorder='big')
-    #int_vers_b = int.from_bytes(num_b, byteorder='big')
     for mask in range(num_a.bit_length()):
         if (num_a & (1 << mask)):
             # xor with a also shifted out that far
             res = res ^ (num_b << mask)
-    # TODO figure out how many bytes this is supposed to be
-    #return res.to_bytes((res.length() + 7) // 8, byteorder='big')
     return res
 
 # divide a by b and give back the quotient --- this is using the multiplication
@@ -39,16 +33,12 @@ def xor_divide_quot_base_2(num_a, num_b):
 def mod_by_in_GF28(num):
     while (num >= (1 << 8)):
         highest_exp = num.bit_length() - modulus_integer_GF28.bit_length()
-        #num = num ^ xor_multiply_base_2((1 << highest_exp), modulus_integer_GF28)
         num = num ^ (modulus_integer_GF28 << highest_exp)
     return num
 
 def find_gcd(left_arg, right_arg, old_state):
     if right_arg == 0:
         return left_arg
-    # this is impossible --- modulus can never be 0
-    #if left_arg == 0:
-    #    return right_arg
     else:
         quotient = xor_divide_quot_base_2(left_arg, right_arg)
         rem = left_arg ^ xor_multiply_base_2(right_arg, quotient)
@@ -59,45 +49,17 @@ def find_gcd(left_arg, right_arg, old_state):
         old_state[1] = (new_s, new_t)
         return find_gcd(right_arg, rem, old_state)
 
-# Requires: num_a and num_b are elements of GF28 < than modulus
-# Returns: multiplication of elements in GF28 where element is less
-# than the modulues (all are bytes)
-def mult_elt_GF28(num_a, num_b):
-    res = 0
-    for mask in range(8):
-        if (num_b & (1 << mask)):
-            # xor with a also shifted out that far
-            res = res ^ mod_by_in_GF28(num_a << mask)
-            if (res >= (1 << 8)):
-                res = res ^ modulus_integer_GF28
-    #return res.to_bytes((res.length() + 7) // 8, byteorder='big')
-    return res
-
 def dot_prod_in_GF28(vect_a, vect_b):
     if len(vect_a) != len(vect_b):
         raise Error("Vector lengths with dot product are not the same.")
     res = GF28(0)
     for idx in range(len(vect_a)):
-        # there is an overloaded method for type GF28
         add_to_sum = vect_a[idx] * vect_b[idx]
-        # for this too
         res = add_to_sum + res
-        # you probably need to change this
-        # yes, because this is an ADD not multiplication
-        #return res.to_bytes((res.length() + 7) // 8, byteorder='big')
     if res.number >= 256:
         raise ValueError('multiplying_elt_in_GF28 lead to value larger than modulus')
     return res
 
-# takes in an integer and ensures that it is small enough to fit into a
-# word (4 bytes)
-"""def round_polynomial_down(poly_word):
-    while math.ceil(integer.bit_length() / 8) > BYTES_PER_WORD:
-        high_exp_x = poly_word.bit_length()
-        poly_word = poly_word & (1 << high_exp_x)
-        poly_word += (1 << ((high_exp_x - 1) % 4))
-    return poly_word
-"""
 class GF28:
     def __init__(self, initial=0, bypass_modcheck=False):
         if bypass_modcheck:
@@ -151,8 +113,3 @@ def multiply_polys(a,b):
             index_affected = it + it2 % 4
             result_poly[index_affected] = result_poly[index_affected] + (a[it] * b[it2])
     return result_poly
-"""
-class PolyCoeffGF28:
-    __init__():
-    """
-
