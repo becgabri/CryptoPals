@@ -29,13 +29,12 @@ def modified_oracle_copy(plaintext_array):
     return res
 
 def main():
-    print("Appended text has length {}".format(prepend_length))
     # from CryptoPals12
     # -------------------------------------------------
     # figure out how much padding there is
     # ensure its ECB
     block_size = find_oracle_copy_block_size(modified_oracle_copy)
-    print("Guessed size of blocks {}".format(block_size))
+    #TODO modify the detection oracle function
     #mode_str = detection_oracle(modified_oracle_copy)
     #if mode_str == "CBC":
     #    print("Is not ECB, try again")
@@ -46,14 +45,15 @@ def main():
     no_extend = modified_oracle_copy(bytearray())
     one_extend = modified_oracle_copy(bytearray([ord('a')]))
     # jump by 16's, checking size
-    while no_extend[number_blocks: number_blocks + 16] == one_extend[number_blocks: number_blocks + 16]:
+    while no_extend[number_blocks * block_size: (number_blocks + 1) * block_size] == \
+        one_extend[number_blocks * block_size: (number_blocks + 1) * block_size]:
         number_blocks += 1
 
-    padd_out = 1
+    padd_out = 0
     while one_extend[block_size * number_blocks: block_size * (number_blocks + 1)] != no_extend[block_size * number_blocks: block_size * (number_blocks + 1)]:
         padd_out += 1
         no_extend = one_extend
-        one_extend = modified_oracle_copy(bytearray([ord('a')] * padd_out))
+        one_extend = modified_oracle_copy(bytearray([ord('a')] * (padd_out + 1)))
 
     # takes advantage that until you "pad out" all the way the last block will
     # change values
@@ -61,7 +61,6 @@ def main():
     # to [random beg] [padding] | [unknown str]
 
     # this is why we need to delete one
-    padd_out -= 1
     # modified from CryptoPals12
     # ---------------------------------------------------
     unknown_str_len = len(append_this)
@@ -92,8 +91,6 @@ def main():
                 plaintext += str(bytearray([i]), encoding='utf-8')
                 break
             padding.pop()
-        print(plaintext)
-    #import pdb; pdb.set_trace()
     print(plaintext)
     return
 
