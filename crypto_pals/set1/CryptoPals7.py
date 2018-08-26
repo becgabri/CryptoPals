@@ -183,7 +183,17 @@ def GF28_to_string(list_GF28):
 # input is an array of state that has been unscrambled
 def strip_PKCS_padding(array_GF28):
     padding_amount = (array_GF28[-1]).number
-    return array_GF28[:len(array_GF28) -  padding_amount]
+    # checks from set2 challenge 15
+
+    if padding_amount > 16:
+        raise ValueError("No padding")
+    # validate padding
+    last_valid_idx = len(array_GF28) - 1
+    for i in range(1, padding_amount):
+        if array_GF28[last_valid_idx - i].number != padding_amount:
+            raise ValueError("Padding Error")
+    # strip padding
+    return array_GF28[:-1 * padding_amount]
 
 # right now only 128 bit keys are accepted
 # key and plaintext must be arrays of GF28 elts
