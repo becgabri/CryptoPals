@@ -1,14 +1,15 @@
-from build_subtable import create_table
+import sys, getopt
+from .build_subtable import create_table
 import os
 import json
-import GF28
+from . import GF28
 import math
 import base64
 import sys, getopt, os.path
 
 BYTES_PER_WORD = 4
 WORDS_PER_STATE = 4
-filename = "AES_sub_bytes.txt"
+filename = os.path.join(os.path.dirname(__file__), "AES_sub_bytes.txt")
 ROUNDS = 10
 
 # takes a round index and returns a round constant for key expansion
@@ -179,12 +180,10 @@ def GF28_to_string(list_GF28):
         res.append(chr(elt.number))
     return "".join(res)
 
-def restructure_output(state_arr):
-    string_output = [""] * 16
-    for idx, GF28_elt in enumerate(state_arr):
-        quot_rem = divmod(idx, 4)
-        string_output[quot_rem[1] * 4 + quot_rem[0]] = chr(state_arr[idx].number)
-    return "".join(string_output)
+# input is an array of state that has been unscrambled
+def strip_PKCS_padding(array_GF28):
+    padding_amount = (array_GF28[-1]).number
+    return array_GF28[:len(array_GF28) -  padding_amount]
 
 # right now only 128 bit keys are accepted
 # key and plaintext must be arrays of GF28 elts
@@ -258,24 +257,27 @@ def encryption_mode_ECB(key, plaintext, encryption_alg):
     plaintext_in_GF28 = modify_list_into_GF28(plaintext)
     key_in_GF28 = modify_list_into_GF28(key)
 
-    ciphertext = ""
+    # use PKCS 7 padding
+    padding = 16 - (len(plaintext_in_GF28) % 16)
+    plaintext_in_GF28.extend([GF28.GF28(padding)] * padding)
+
+    ciphertext_blocks = []
     for block in range(0, len(plaintext_in_GF28), 16):
         segment = plaintext_in_GF28[block:block + 16]
-        if len(segment) < 16:
-            # padd out the text to the correct size
-            padding = 16 - len(segment)
-            segment += (chr(padding) * padding)
-        ciphertext += GF28_to_string(encryption_alg(key_in_GF28, segment))
+        ciphertext_blocks.extend(encryption_alg(key_in_GF28, segment))
+    ciphertext = GF28_to_string(ciphertext_blocks)
     return ciphertext
 
 # ciphertext IS a multiple of 16
 def decryption_mode_ECB(key, ciphertext, decryption_alg):
-    plaintext = ""
+    deciphered_blocks = []
     ciphertext_in_GF28 = modify_list_into_GF28(ciphertext)
     key_in_GF28 = modify_list_into_GF28(key)
     for block in range(0, len(ciphertext_in_GF28), 16):
-        plaintext += GF28_to_string(decryption_alg(key_in_GF28, ciphertext_in_GF28[block: block + 16]))
+        deciphered_blocks.extend(decryption_alg(key_in_GF28, ciphertext_in_GF28[block: block + 16]))
+    plaintext = GF28_to_string(strip_PKCS_padding(deciphered_blocks))
     return plaintext
+
 
 # Requires: encryption alg is a function with signature
 # (key, text), it should also return a string of
@@ -305,7 +307,7 @@ def DECRYPTION_CBC_MODE(IV, key, text, decryption_alg):
     ciphertext_in_GF28 = modify_list_into_GF28(text)
     IV_in_GF28 = modify_IV_into_GF28(IV)
     key_in_GF28 = modify_list_into_GF28(key)
-    plaintext = ""
+    plaintext_blocks = []
 
     for block in range(0, len(ciphertext_in_GF28), 16):
         previous_segment = ciphertext_in_GF28[block - 16:block] if block >= 16 else IV_in_GF28
@@ -313,7 +315,8 @@ def DECRYPTION_CBC_MODE(IV, key, text, decryption_alg):
         res = decryption_alg(key_in_GF28, segment)
         for idx, elt in enumerate(res):
             res[idx] = res[idx] + previous_segment[idx]
-        plaintext += GF28_to_string(res)
+        plaintext_blocks.extend(res)
+    plaintext = GF28_to_string(strip_PKCS_padding(plaintext_blocks))
     return plaintext
 
 
