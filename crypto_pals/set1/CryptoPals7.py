@@ -185,8 +185,8 @@ def strip_PKCS_padding(array_GF28):
     padding_amount = (array_GF28[-1]).number
     # checks from set2 challenge 15
 
-    if padding_amount > 16:
-        raise ValueError("No padding")
+    if padding_amount > 16 or padding_amount == 0:
+        raise ValueError("Padding Error")
     # validate padding
     last_valid_idx = len(array_GF28) - 1
     for i in range(1, padding_amount):

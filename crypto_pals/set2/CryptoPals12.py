@@ -23,7 +23,7 @@ def close_oracle_copy(plaintext):
 
 # cipher is a function with parameters (key, text)
 def find_block_size(mode, cipher, key):
-    result = mode(AES_RAND_KEY,'a', cipher)
+    result = mode(key,'a', cipher)
     return len(result)
 
 def find_oracle_copy_block_size(oracle):

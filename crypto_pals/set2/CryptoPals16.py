@@ -21,7 +21,6 @@ def enc_user_data(plaintext):
 
 def is_admin(enc_text):
     decrypted = CryptoPals7.DECRYPTION_CBC_MODE(IV, AES_KEY, enc_text, CryptoPals7.decrypt_aes)
-    import pdb; pdb.set_trace()
     args = decrypted.split(';')
     for pair in args:
         if pair == 'admin=true':
