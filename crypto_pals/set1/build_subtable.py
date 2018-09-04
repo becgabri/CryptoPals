@@ -1,7 +1,7 @@
 import os
 import json
 import math
-from . import GF28
+from crypto_pals.set1 import GF28
 filename = "AES_sub_bytes.txt"
 
 def create_table():

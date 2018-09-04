@@ -1,5 +1,7 @@
 #!/bin/usr/python3
 #from CryptoPals7 import sub_bytes, inv_sub_bytes
+import sys
+sys.path.append('/mnt/c/Users/becga/Documents/crypto_pals/set1')
 import unittest
 import os
 import json
@@ -66,7 +68,7 @@ class Substests(unittest.TestCase):
         solution = [GF28.GF28(99)] * 16
         CryptoPals7.sub_bytes(test1)
         for idx,item in enumerate(test1):
-            self.assertEqual(test1[idx], solution[idx])
+            self.assertEqual(test1[idx].number, solution[idx].number)
         #self.assertSequenceEqual(test1, solution, seq_type=GF28.GF28)
 
     def test_simple(self):
@@ -74,14 +76,14 @@ class Substests(unittest.TestCase):
         solution = [GF28.GF28(124), GF28.GF28(119), GF28.GF28(123), GF28.GF28(242)] * 4
         CryptoPals7.sub_bytes(test1)
         for idx,item in enumerate(test1):
-            self.assertEqual(test1[idx], solution[idx])
+            self.assertEqual(test1[idx].number, solution[idx].number)
 
     def test_simple_subs_inverse(self):
         test2 = [GF28.GF28(124), GF28.GF28(119), GF28.GF28(123), GF28.GF28(242)] * 4
         solution = [GF28.GF28(1),GF28.GF28(2),GF28.GF28(3),GF28.GF28(4)] * 4
         CryptoPals7.inv_sub_bytes(test2)
         for idx,item in enumerate(test2):
-            self.assertEqual(test2[idx], solution[idx])
+            self.assertEqual(test2[idx].number, solution[idx].number)
 
 class ShiftRowTests(unittest.TestCase):
     def setUp(self):
@@ -112,7 +114,7 @@ class ShiftRowTests(unittest.TestCase):
             end_state[idx] = GF28.GF28(value)
         new_state = CryptoPals7.inv_shift_rows(beg_state)
         for idx, val in enumerate(new_state):
-            self.assertEqual(new_state[idx], end_state[idx])
+            self.assertEqual(new_state[idx].number, end_state[idx].number)
 
     def test_row_shift(self):
         end_state = [
@@ -135,7 +137,7 @@ class ShiftRowTests(unittest.TestCase):
             end_state[idx] = GF28.GF28(value)
         new_state = CryptoPals7.shift_rows(beg_state)
         for idx, val in enumerate(new_state):
-            self.assertEqual(new_state[idx], end_state[idx])
+            self.assertEqual(new_state[idx].number, end_state[idx].number)
 
 class MixedColsTests(unittest.TestCase):
     def setUp(self):
@@ -169,7 +171,7 @@ class MixedColsTests(unittest.TestCase):
         beg_state = CryptoPals7.mix_cols(beg_state)
 
         for idx, num in enumerate(beg_state):
-            self.assertEqual(end_state[idx], beg_state[idx])
+            self.assertEqual(end_state[idx].number, beg_state[idx].number)
 
     def test_inv_mix_cols(self):
         end_state = [
@@ -194,7 +196,7 @@ class MixedColsTests(unittest.TestCase):
         beg_state = CryptoPals7.inv_mix_cols(beg_state)
 
         for idx, num in enumerate(beg_state):
-            self.assertEqual(end_state[idx], beg_state[idx])
+            self.assertEqual(end_state[idx].number, beg_state[idx].number)
 
     def test_wiki_mix_col(self):
         beg_state = [
@@ -217,7 +219,7 @@ class MixedColsTests(unittest.TestCase):
         beg_state = CryptoPals7.mix_cols(beg_state)
 
         for idx, num in enumerate(beg_state):
-            self.assertEqual(end_state[idx], beg_state[idx])
+            self.assertEqual(end_state[idx].number, beg_state[idx].number)
 
 class Bit128Test(unittest.TestCase):
     def test_zero_key(self):
@@ -283,7 +285,7 @@ class KeyExpandTest(unittest.TestCase):
         small_key = [GF28.GF28(ord(let)) for let in key]
         some_exp_key = CryptoPals7.key_expansion(small_key)
         for ind in range(len(beginning_of_expanded_key)):
-            self.assertEqual(exp_key_in_GF28[ind], some_exp_key[ind])
+            self.assertEqual(exp_key_in_GF28[ind].number, some_exp_key[ind].number)
 
 class CBCTest(unittest.TestCase):
     def setUp(self):

@@ -1,11 +1,13 @@
 import sys, getopt
-from .build_subtable import create_table
+sys.path.append('/mnt/c/Users/becga/Documents/crypto_pals')
+
+from crypto_pals.set1.build_subtable import create_table
 import os
 import json
-from . import GF28
+from crypto_pals.set1 import GF28
 import math
 import base64
-import sys, getopt, os.path
+import os.path
 
 BYTES_PER_WORD = 4
 WORDS_PER_STATE = 4
@@ -39,6 +41,9 @@ with open(filename, 'r') as sub_r:
     SUBS_TABLE = both_tables[0]
     INV_SUBS_TABLE = both_tables[1]
 
+def print_GF28_list(list_t):
+    print('|'.join([str(item.number) for item in list_t]))
+    return
 # 1) Build up substituion matrix --
 # assume for now that the name of subst. table
 # is sub_table

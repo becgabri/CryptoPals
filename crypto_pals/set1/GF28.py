@@ -86,6 +86,9 @@ class GF28:
                     #res = res ^ modulus_integer_GF28
         return GF28(res, bypass_modcheck=True)
 
+    def __repr__(self):
+        return str(self.number)
+
     def inverse(self):
         if self.number == 0:
             return GF28(0)
