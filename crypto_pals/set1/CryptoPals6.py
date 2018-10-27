@@ -2,9 +2,9 @@ import sys
 import base64
 import binascii
 import math
-from CryptoPals1 import hexXOR
-from CryptoPals3 import xorBrute, hexToAsciiPrint
-from permutation import perm
+from crypto_pals.set1.CryptoPals1 import hexXOR
+from crypto_pals.set1.CryptoPals3 import xorBrute, hexToAsciiPrint
+from crypto_pals.set1.permutation import perm
 
 def count_ones(integer):
     count_ones = 0
@@ -31,6 +31,48 @@ def hamming_dist(string1, string2):
     # change the integer to a byte array and then count
     return count_ones(res)
 
+def crack_single_key(key_len, plaintext):
+    encrypted_with_sameKey = []
+    # key_pair[0] is the key length
+    for index in range(key_len):
+        encrypted_with_sameKey.append(plaintext[index::key_len])
+    # solve each one individually and reconstruct
+    candidates = []
+    could_not_get_enc_val = False
+    for group in encrypted_with_sameKey:
+        possible_enc_vals = xorBrute(group)
+        if not possible_enc_vals:
+            could_not_get_enc_val = True
+        else:
+            candidates.append([possible_enc_vals[0]])
+    if could_not_get_enc_val:
+        print("Could not get any more values")
+    #[[],[],[]]
+    # list is key_pair long
+    possible_keys = perm(candidates)
+    # this is bytes
+    testtextHex = plaintext
+    import pdb; pdb.set_trace()
+
+    for idx,key in enumerate(possible_keys):
+        padding = bytes(key * math.ceil(len(testtextHex) / len(key)))
+        padding = padding[:len(testtextHex)]
+        final_res = hexXOR(padding, testtextHex)
+        print("Key index in array: {}".format(idx))
+        for i in range(0, len(final_res) - key_len + 1, key_len):
+            print('{}\n {}'.format((i // key_len), (final_res[i:i+key_len]).decode('utf-8')))
+    resp = input("Input best guess key index")
+    key_guess = int(resp)
+    if key_guess < len(possible_keys):
+        key = possible_keys[key_guess]
+        padding = bytes(key * math.ceil(len(testtextHex) / len(key)))
+        padding = padding[:len(testtextHex)]
+        final_res = hexXOR(padding, testtextHex)
+        result = []
+        for i in range(0, len(final_res) - key_len + 1, key_len):
+            result.append(bytearray(final_res[i:i+key_len]))
+        return result
+
 def crack_vigenere(plaintext):
     likely_key_lens = []
     for key_length in range(2,41):
@@ -48,34 +90,7 @@ def crack_vigenere(plaintext):
     sorted_list = sorted_list[1:3]
 
     for key_pair in sorted_list:
-        encrypted_with_sameKey = []
-        # key_pair[0] is the key length
-        for index in range(key_pair[0]):
-            encrypted_with_sameKey.append(plaintext[index::key_pair[0]])
-        # solve each one individually and reconstruct
-        candidates = []
-        could_not_get_enc_val = False
-        for group in encrypted_with_sameKey:
-            possible_enc_vals = xorBrute(group)
-            if not possible_enc_vals:
-                could_not_get_enc_val = True
-            else:
-                candidates.append([possible_enc_vals[0]])
-        if could_not_get_enc_val:
-            continue
-        #[[],[],[]]
-        # list is key_pair long
-        possible_keys = perm(candidates)
-        # this is bytes
-        testtextHex = plaintext
-        #import pdb; pdb.set_trace()
-        for key in possible_keys:
-            padding = bytes(key * math.ceil(len(testtextHex) / len(key)))
-            padding = padding[:len(testtextHex)]
-            final_res = hexXOR(padding, testtextHex)
-            print('{}'.format(final_res.decode('utf-8')))
-            print('This is the key: {}'.format(bytes(key).decode('utf-8')))
-
+        crack_single_key(key_pair[0], plaintext)
 
 def main():
     #test_str1 = "this is a test"

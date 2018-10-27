@@ -35,7 +35,7 @@ def perm_function_res(bag, funct):
                 for some_stuff in bag[idx]:
                     #modify_item = list(current_item)
                     current_item.append(some_stuff)
-                    funct(current_item))
+                    funct(current_item)
                     current_item.pop()
 
 def main():

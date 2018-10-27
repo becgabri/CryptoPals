@@ -12,12 +12,9 @@ test_str = base64.b64decode(test_str)
 def counter_function(ctr, nonce):
     bytes_str = struct.pack("<Q", ctr)
     key_stream_enc = nonce + CryptoPals7.modify_list_into_GF28(bytes_str)
-
-    print("Key Stream:")
-    CryptoPals7.print_GF28_list(key_stream_enc)
     return key_stream_enc
 
-def CTR_ENCRYPTION_MODE(encryption_alg, plaintext, key, ctr_func=None, nonce=None):
+def CTR_ENCRYPTION_MODE(encryption_alg, plaintext, key, ctr_func=counter_function, nonce=None):
     nonce_curr = CryptoPals7.modify_list_into_GF28(nonce)
     number_blocks = math.ceil(len(plaintext) / BLOCK_SIZE)
     key_GF28 = CryptoPals7.modify_list_into_GF28(key)
@@ -27,7 +24,6 @@ def CTR_ENCRYPTION_MODE(encryption_alg, plaintext, key, ctr_func=None, nonce=Non
         gf28_key_stream += encryption_alg(key_GF28, ctr_func(idx, nonce_curr))
     pt_GF28 = CryptoPals7.modify_list_into_GF28(plaintext)
     res = []
-    import pdb; pdb.set_trace()
     for i in range(len(pt_GF28)):
         res.append(pt_GF28[i] + gf28_key_stream[i])
     return CryptoPals7.GF28_to_string(res)
