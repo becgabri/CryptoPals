@@ -191,12 +191,12 @@ def strip_PKCS_padding(array_GF28):
     # checks from set2 challenge 15
 
     if padding_amount > 16 or padding_amount == 0:
-        raise ValueError("Padding Error")
+        raise ValueError("Padding Error:" + GF28_to_string(array_GF28))
     # validate padding
     last_valid_idx = len(array_GF28) - 1
     for i in range(1, padding_amount):
         if array_GF28[last_valid_idx - i].number != padding_amount:
-            raise ValueError("Padding Error")
+            raise ValueError("Padding Error:" + GF28_to_string(array_GF28))
     # strip padding
     return array_GF28[:-1 * padding_amount]
 
@@ -255,6 +255,10 @@ def modify_IV_into_GF28(text_IV):
     # each integer should be delimited by dashes (i.e. -) and there should be 16
     # integers
     result_in_GF28 = []
+    if type(text_IV) is bytearray:
+        for i in text_IV:
+            result_in_GF28.append(GF28.GF28(i))
+        return result_in_GF28
     values = text_IV.split('-')
     if (len(values)) != 16:
         raise ValueError("IV is not correct length for AES")

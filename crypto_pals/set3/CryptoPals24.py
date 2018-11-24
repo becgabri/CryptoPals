@@ -33,12 +33,13 @@ def mersenne_stream_ciper(seed, pt_bytes):
             curr_idx -= 1
     return ct_text
 
-def crack_seed(ciphertext, key):
+def crack_seed(ciphertext):
     known_states = []
     recover_32 = 0
     idx = 0
     byte_msk = (1 << 8) - 1
-    for i in range(len(ciphertext) - 1 - 14, len(ciphertext)):
+    for i in range(len(ciphertext) - 14, len(ciphertext)):
+        print("{}".format(i))
         # add to 32 bit num result from generator
         recovered_block = ciphertext[i] ^ ord('A')
         recover_32 = recover_32 | (recovered_block << (8 * (3 - (i % 4))))
@@ -49,27 +50,23 @@ def crack_seed(ciphertext, key):
     # matches in the second block you've seen
     padd = 'A' * len(ciphertext)
     for poss_seed in range(1, 2**16 + 1):
-        if poss_seed == key:
-            print("{}".format(marker))
         # check 4 bytes at least
         cseed = CryptoPals21.MersenneTwister19937(poss_seed)
-        marker = (len(ciphertext) - 1 - 14) % 4
-        quotient = (len(ciphertext) - 1 - 14) // 4
+        marker = (len(ciphertext) - 14) % 4
+        quotient = (len(ciphertext) - 14) // 4
         known_st_marker = 0
+        # quotient + 1 jumps into the current block
         for num in range(quotient + 1):
             output_stream = cseed.extract_num()
-
-        output_stream = cseed.extract_num()
-        known_st_marker = 1
-        quotient += 1
+        if marker != 0:
+            output_stream = cseed.extract_num()
+            known_st_marker = 1
         is_correct = True
         while known_st_marker < len(known_states):
             if known_states[known_st_marker] != output_stream:
                 is_correct = False
                 break
-            print("Success occurred")
             output_stream = cseed.extract_num()
-            quotient += 1
             known_st_marker += 1
         if is_correct:
             return poss_seed
@@ -88,8 +85,9 @@ def main():
     print("Plaintext is: {}".format(pt_bytes))
     ciphertext = mersenne_stream_ciper(key, pt_bytes)
     print("Trying to crack cipher. First Try: Brute force binary search")
-    crack_s = crack_seed(ciphertext, key)
+    crack_s = crack_seed(ciphertext)
     print("{}".format(crack_s))
+
 
 if __name__ == "__main__":
     main()
