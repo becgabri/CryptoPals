@@ -137,7 +137,7 @@ class SHA1:
         if type(message_to_add) is str:
             add_to_msg = str.encode(message_to_add)
 
-        if (len(self.message) + len(add_to_msg) + self.blocks_processed) > ((2**64) / 2**3):
+        if (len(self.message) + len(add_to_msg) + (self.blocks_processed * 64)) > ((2**64) / 2**3):
             raise ValueError("The message must be less than 2**64 bits long.")
         else:
             self.message += add_to_msg

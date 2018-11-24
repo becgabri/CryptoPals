@@ -19,15 +19,15 @@ def tag_message(secret_key, message):
     #return str(int.from_bytes(tag, byteorder='big'),encoding='utf-8')
 
 def main():
-    msg_str = 'Persuasion, Emma, and other novels by Austen'
+    msg_str = 'Better a witty fool, than a foolish wit'
     a_0 = tag_message('password123', msg_str)
     if verify_message('password123', a_0, msg_str):
         print("Message verified correctly!")
     else:
         print("Correct tag did not verify :(")
         return 
-    mall_msg = 'Persuasion, Tame, and other novels by Austen'
-    mall_msg2 = 'Persuasion, Emma, and other novels by'
+    mall_msg = 'Bitter a witty fool, make a foolish twit'
+    mall_msg2 = 'Better a witty fool, than a foolish'
 
     if verify_message('password123', a_0, mall_msg) or \
         verify_message('password123', a_0, mall_msg2):

@@ -29,11 +29,8 @@ def validate_msg_for_key(msg, tag):
 def main():
     tag, message = create_msg()
     print("Old tag is ", tag)
-    # 1) Try to figure out the length of the original message
-    # you don't even need to do this, just tag until you increase block size
-    # keep increasing by a byte and then figure out the length from that
+    # keep increasing your test length by a byte and see if it succeeds
     # [key] [original msg] | [padd]
-    # how much does it take to get another block?
     for i in range(1, POSSIBLE_BLOCKS):
         new_digest = SHA1.SHA1()
 
