@@ -1,6 +1,5 @@
 import sys
 import os
-sys.path.append('/mnt/c/Users/becga/Documents/crypto_pals')
 import base64
 from crypto_pals.set3 import CryptoPals18
 from crypto_pals.set2 import CryptoPals11

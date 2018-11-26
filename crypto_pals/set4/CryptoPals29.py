@@ -1,6 +1,5 @@
 import sys
 import random
-sys.path.append('/mnt/c/Users/becga/Documents/crypto_pals')
 from crypto_pals.set4 import CryptoPals28
 import SHA1
 

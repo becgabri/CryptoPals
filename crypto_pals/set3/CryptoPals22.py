@@ -3,7 +3,6 @@ import time
 import sys
 import os
 import math
-sys.path.append('/mnt/c/Users/becga/Documents/crypto_pals')
 from crypto_pals.set3 import CryptoPals21
 
 def twisting_generate():

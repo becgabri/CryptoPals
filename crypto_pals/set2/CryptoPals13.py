@@ -1,6 +1,5 @@
 import sys
 import base64
-sys.path.append('/mnt/c/Users/becga/Documents/crypto_pals')
 from crypto_pals.set1 import CryptoPals7
 from crypto_pals.set2.CryptoPals11 import generate_rand_AES_key
 # LESSON: ECB is incredibly unsafe if you have access even to just

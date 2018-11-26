@@ -1,5 +1,4 @@
 import sys, getopt
-sys.path.append('/mnt/c/Users/becga/Documents/crypto_pals')
 
 from crypto_pals.set1.build_subtable import create_table
 import os
@@ -8,7 +7,9 @@ from crypto_pals.set1 import GF28
 import math
 import base64
 import os.path
-
+# DISCLAIMER: This is an AES implementation that was made for fun. There are NO
+# guarantees on this software being secure or incorrect. Please don't use this for
+# anything serious 
 BYTES_PER_WORD = 4
 WORDS_PER_STATE = 4
 filename = os.path.join(os.path.dirname(__file__), "AES_sub_bytes.txt")

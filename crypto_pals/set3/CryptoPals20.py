@@ -1,6 +1,5 @@
 import base64
 import sys
-sys.path.append('/mnt/c/Users/becga/Documents/crypto_pals')
 from crypto_pals.set1 import CryptoPals6
 from crypto_pals.set3 import CryptoPals19
 from crypto_pals.set2.CryptoPals11 import generate_rand_AES_key

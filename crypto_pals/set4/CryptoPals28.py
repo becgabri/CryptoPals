@@ -2,14 +2,14 @@ import sys
 sys.path.append('/mnt/c/Users/becga/Documents/crypto_pals')
 import SHA1
 
-# secret_key and message must be strs
+# secret_key and message must be of same type
 def verify_message(secret_key, tag, message):
     hash_func2 = SHA1.SHA1()
     hash_func2.Update(secret_key + message)
     check_val = hash_func2.Sum()
     return check_val == tag
 
-# secret_key and message must be strs
+# secret_key and message must be of same type
 def tag_message(secret_key, message):
     hash_func = SHA1.SHA1()
     hash_func.Update(secret_key + message)
@@ -26,7 +26,7 @@ def main():
     else:
         print("Correct tag did not verify :(")
         return 
-    mall_msg = 'Bitter a witty fool, make a foolish twit'
+    mall_msg = 'Bitter a witty fool, and a foolish twit'
     mall_msg2 = 'Better a witty fool, than a foolish'
 
     if verify_message('password123', a_0, mall_msg) or \
@@ -38,6 +38,7 @@ def main():
         return
 
     print("Passed all tests.") 
+
     return 
 
 

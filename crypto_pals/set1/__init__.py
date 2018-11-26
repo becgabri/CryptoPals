@@ -1,5 +1,4 @@
 import sys
-sys.path.append('/mnt/c/Users/becga/Documents/crypto_pals/set1')
 #from set1.CryptoPals7 import ENCRYPTION_CBC_MODE, DECRYPTION_CBC_MODE
 #from set1.CryptoPals7 import encryption_mode_ECB, decryption_mode_ECB
 #from set1.CryptoPals7 import encrypt_aes, decrypt_aes

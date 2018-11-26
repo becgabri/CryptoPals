@@ -2,7 +2,6 @@
 #AAAAAAAAA characters
 import sys
 import random
-sys.path.append("/mnt/c/Users/becga/Documents/crypto_pals")
 import CryptoPals21
 import CryptoPals23
 # specifies
