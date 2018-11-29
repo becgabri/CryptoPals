@@ -84,7 +84,6 @@ def main():
             padding.append(i)
             if len(padding) < 16:
                 print("something is wrong here.....")
-                import pdb; pdb.set_trace()
             current_restext = modified_oracle_copy(padd_out_begin + padding[-16:])
             if val_to_match == current_restext[(number_blocks + 1) * block_size:(number_blocks + 2) * block_size]:
                 plaintext += str(bytearray([i]), encoding='utf-8')

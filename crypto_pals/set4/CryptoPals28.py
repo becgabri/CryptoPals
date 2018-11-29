@@ -1,5 +1,4 @@
 import sys
-sys.path.append('/mnt/c/Users/becga/Documents/crypto_pals')
 import SHA1
 
 # secret_key and message must be of same type
@@ -14,7 +13,7 @@ def tag_message(secret_key, message):
     hash_func = SHA1.SHA1()
     hash_func.Update(secret_key + message)
     tag = hash_func.Sum()
-    
+
     return tag
     #return str(int.from_bytes(tag, byteorder='big'),encoding='utf-8')
 
@@ -25,7 +24,7 @@ def main():
         print("Message verified correctly!")
     else:
         print("Correct tag did not verify :(")
-        return 
+        return
     mall_msg = 'Bitter a witty fool, and a foolish twit'
     mall_msg2 = 'Better a witty fool, than a foolish'
 
@@ -37,9 +36,9 @@ def main():
         print("Different password should not give a message that still verifies!!")
         return
 
-    print("Passed all tests.") 
+    print("Passed all tests.")
 
-    return 
+    return
 
 
 if __name__ == "__main__":
