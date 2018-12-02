@@ -5,8 +5,8 @@ import math
     # please please don't use this... remember this came even before MD5
 # code is adapted from implementation at https://tools.ietf.org/html/rfc1320]
 # CURRENTLY STILL DEBUGGING
-
 BLOCK_SIZE = 512
+PROCESS_LIMIT = BLOCK_SIZE // 8
 def Majority(x,y,z):
     return (x & y) | (y & z) | (x & z)
 
@@ -16,19 +16,46 @@ def Conditional(x,y,z):
 def Parity(x,y,z):
     return x ^ y ^ z
 
-#takes message as an integer --  from SHA1 code
-def padd_message(message_as_int, num_characters):
-    message_as_int = (message_as_int << 1) | 1
+def reverse_bytes_in_word(word):
+    reversed = 0
+    for j in range(4):
+        byte_of_word = (word >> (8 * j)) & ((1 << 8) - 1)
+        reversed += (byte_of_word << (8 * (3 - j)))
+    return reversed
 
+def reverse_bytes_in_words_in_block(block_as_int):
+    new_block = 0
+    for i in range(16):
+        current_word = (block_as_int >> (15 - i) * 32) & ((1 << 32) - 1)
+        reversed_word = reverse_bytes_in_word(current_word)
+        new_block += (reversed_word << ((15 - i) * 32))
+    return new_block
+
+#takes message as an integer --  from SHA1 code
+def padd_message(message, num_characters):
+    # need to add this to a particular block now. figure out where the index
+    # should start
+    message_as_int = int.from_bytes(message, byteorder='big')
+    message_as_int = (message_as_int << 1) | 1
     # l + 1 + k = 448 mod 512 so,
     # k = 448 - l - 1 (mod 512) ??
     zero_chars = (448 - (num_characters * 8) - 1) % 512
     message_as_int = message_as_int << zero_chars
+
     end_blocks = (num_characters * 8) & ((1 << 64) - 1)
     end_blocks = ((end_blocks & ((1 << 32) - 1)) << 32) | (end_blocks >> 32)
-    message_as_int = (message_as_int << 64) | end_blocks
+    new_end_block = reverse_bytes_in_word(end_blocks >> 32) << 32
+    new_end_block = new_end_block | reverse_bytes_in_word(end_blocks & ((1 << 32) - 1))
+    end_blocks = new_end_block
 
-    return message_as_int
+    message_as_int = (message_as_int << 64) | end_blocks
+    blocks_processed = int(math.ceil(message_as_int.bit_length() / BLOCK_SIZE))
+    msg_block = []
+    for j in range(blocks_processed):
+        block = (message_as_int >> ((blocks_processed - 1 - j) * BLOCK_SIZE)) & ((1 << BLOCK_SIZE) -1)
+        msg_block.append(block)
+
+    return msg_block
 
 def rotate_left_shift(val, shift_val, word_size):
     tmp = (val << shift_val) | (val >> (word_size - shift_val))
@@ -46,19 +73,34 @@ class MD4():
         if self.message != b"" or self.blocks_processed != 0:
             raise ValueError("Can only update before Update function is called and can only update once")
         for i in range(4):
-            self.hash_vals[4 - i - 1] = state_to_update_with >> (32 * i) & ((1 << 32) - 1)
+            self.hash_vals[i] = (state_to_update_with >> (32 * (3 - i))) & ((1 << 32) - 1)
+        # reverse order of each block [JEEZ]
+        for n in range(4):
+            tmp = 0
+            for j in range(4):
+                tmp += ((self.hash_vals[n] >> (8 * (3 - j))) & 0xff) << (8 * j)
+            self.hash_vals[n] = tmp
         self.blocks_processed += blocks
         return
 
-    # from SHA again, they are the same
+    # parses only those blocks that are full
+    # removes them from self.message
     def parse_to_blocks(self):
-        message_as_int = int.from_bytes(self.message, byteorder='big')
-        message_as_int = padd_message(message_as_int, len(self.message) + (self.blocks_processed * (512 // 8)))
+        # take only multiples of block size
+        blocks_calc = (len(self.message)) // PROCESS_LIMIT
+
+        message_as_int = int.from_bytes(self.message[:blocks_calc * PROCESS_LIMIT], byteorder='big')
+        #+ (self.blocks_processed * (512 // 8))
         message_blocks = []
-        blocks_calc = int(math.ceil(message_as_int.bit_length() / BLOCK_SIZE))
         for i in range((blocks_calc-1)*BLOCK_SIZE, -1, -BLOCK_SIZE):
             tmp = (message_as_int >> i) & ((1 << BLOCK_SIZE) - 1)
+            #reverse_tmp = reverse_bytes_in_words_in_block(tmp)
             message_blocks.append(tmp)
+
+        #message_as_int = padd_message(message_blocks, length_of_message)
+        # keep end blocks
+        characters_processed = blocks_calc * PROCESS_LIMIT
+        del self.message[:characters_processed]
         return message_blocks
 
     def round_one_func(self, idx_to_ch, b, c, d, val_x_k, shift):
@@ -79,7 +121,6 @@ class MD4():
                 self.hash_vals[1], X[i+2], 11)
             self.round_one_func(1, self.hash_vals[2], self.hash_vals[3],
                 self.hash_vals[0], X[i+3], 19)
-
         return
 
     def round_two_func(self, idx_to_ch, b, c, d, val_x_k, shift):
@@ -125,12 +166,37 @@ class MD4():
         if type(msg) is str:
             msg = str.encode(msg)
         self.message += msg
+        if len(self.message) >= PROCESS_LIMIT:
+            blocks = self.parse_to_blocks()
+            for block in blocks:
+                self.blocks_processed += 1
+                saved_vals = []
+                for i in range(len(self.hash_vals)):
+                    saved_vals.append(self.hash_vals[i])
+                X = []
+                for i in range(15, -1, -1):
+                    # reverse the order, this is so stupid
+                    word = (block >> (i *32)) & ((1 << 32) - 1)
+                    word_rev = reverse_bytes_in_word(word)
+                    X.append(word_rev)
+                print(X)
+                # ROUND 1
+                self.round_one(X)
+                # ROUND 2
+                self.round_two(X)
+                # ROUND 3
+                self.round_three(X)
+                for i in range(len(self.hash_vals)):
+                    self.hash_vals[i] = (self.hash_vals[i] + saved_vals[i]) & ((1 << 32) - 1)
         return
 
     def Sum(self):
-        number = int.from_bytes(self.message, byteorder='big')
-        blocks = self.parse_to_blocks()
-        for idx, block in enumerate(blocks):
+        # new parse_to_blocks ensures that only one block is left that is not
+        # a multiple
+        padded_rest = padd_message(self.message, len(self.message) + (self.blocks_processed*64))
+        for idx, block in enumerate(padded_rest):
+            print(self.hash_vals)
+            print("Idx block {}: {}".format(idx, hex(block)))
             saved_vals = []
             for i in range(len(self.hash_vals)):
                 saved_vals.append(self.hash_vals[i])
@@ -138,15 +204,9 @@ class MD4():
             for i in range(15, -1, -1):
                 # reverse the order, this is so stupid
                 word = (block >> (i *32)) & ((1 << 32) - 1)
-                # function padd_message already switches the length bits correctly
-                if idx == len(blocks) - 1 and (i == 1 or i == 0):
-                    X.append(word)
-                else:
-                    reversed = 0
-                    for j in range(4):
-                        byte_of_word = (word >> (8 * j)) & ((1 << 8) - 1)
-                        reversed += (byte_of_word << (8 * (3 - j)))
-                    X.append(reversed)
+                word_rev = reverse_bytes_in_word(word)
+                X.append(word_rev)
+            print(X)
             # ROUND 1
             self.round_one(X)
             # ROUND 2
@@ -156,6 +216,7 @@ class MD4():
             for i in range(len(self.hash_vals)):
                 self.hash_vals[i] = (self.hash_vals[i] + saved_vals[i]) & ((1 << 32) - 1)
         final_res = bytearray(16)
+        print("Final Value before decode {}".format(self.hash_vals))
         for i in range(0, 16, 4):
             state_idx = i // 4
             # great, reversing order again
@@ -168,12 +229,28 @@ class MD4():
 
 def main():
     # test1
+
     test1 = MD4()
-    test1.Update("1234567890" * 8)
+    test1.Update("12345678901234567890123456789012345678901234567890123456789012345678901234567890")
     result1 = test1.Sum()
     print(result1)
     result_hex = int.from_bytes(result1, byteorder='big')
     print(hex(result_hex))
+
+    test2 = MD4()
+    print("abcdefghijklmnopqrstuvwxyz")
+    test2.Update("abcdefghijklmnopqrstuvwxyz")
+    result2 = test2.Sum()
+    result_hex = int.from_bytes(result2, byteorder='big')
+    print(hex(result_hex))
+
+    test3 = MD4()
+    print("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
+    test3.Update("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
+    result3 = test3.Sum()
+    result_hex = int.from_bytes(result3, byteorder='big')
+    print(hex(result_hex))
+
     return
 
 if __name__ == "__main__":

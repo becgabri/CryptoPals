@@ -15,7 +15,6 @@ def tag_message(secret_key, message):
     tag = hash_func.Sum()
 
     return tag
-    #return str(int.from_bytes(tag, byteorder='big'),encoding='utf-8')
 
 def main():
     msg_str = 'Better a witty fool, than a foolish wit'
