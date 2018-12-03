@@ -4,7 +4,6 @@ import math
 # it informed the design for MD5 and SHA1 -- it is literally obsolete
     # please please don't use this... remember this came even before MD5
 # code is adapted from implementation at https://tools.ietf.org/html/rfc1320]
-# CURRENTLY STILL DEBUGGING
 BLOCK_SIZE = 512
 PROCESS_LIMIT = BLOCK_SIZE // 8
 def Majority(x,y,z):
@@ -94,7 +93,6 @@ class MD4():
         message_blocks = []
         for i in range((blocks_calc-1)*BLOCK_SIZE, -1, -BLOCK_SIZE):
             tmp = (message_as_int >> i) & ((1 << BLOCK_SIZE) - 1)
-            #reverse_tmp = reverse_bytes_in_words_in_block(tmp)
             message_blocks.append(tmp)
 
         #message_as_int = padd_message(message_blocks, length_of_message)

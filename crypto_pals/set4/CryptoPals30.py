@@ -50,9 +50,6 @@ def main():
         print("New tag is ", new_tag)
 
         for j in range(1, MD4.PROCESS_LIMIT):
-            if j == len(SECRET_KEY):
-                print("Hit key length")
-                import pdb; pdb.set_trace()
             try_msg_blocks = MD4.padd_message(message, j + len(original_msg))
             try_msg = 0
             for idx,try_block in enumerate(try_msg_blocks):

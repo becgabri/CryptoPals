@@ -4,7 +4,7 @@ import math
 
 BLOCK_SIZE = 512
 PROCESS_LIMIT = BLOCK_SIZE // 8
-# TODO:
+
 def all_lower(x, y, z):
     return x < 2**32 and y < 2**32 and z < 2**32
 
@@ -38,7 +38,8 @@ def rotate_left_shift(val, shift_val, word_size):
     return tmp & ((1 << word_size) - 1)
 
 #takes message as an integer
-def padd_message(message_as_int, num_characters):
+def padd_message(message, num_characters):
+    message_as_int = int.from_bytes(message, byteorder='big')
     message_as_int = (message_as_int << 1) | 1
 
     # l + 1 + k = 448 mod 512 so,
@@ -46,8 +47,12 @@ def padd_message(message_as_int, num_characters):
     zero_chars = (448 - (num_characters * 8) - 1) % 512
     message_as_int = message_as_int << zero_chars
     message_as_int = (message_as_int << 64) | (num_characters * 8)
-
-    return message_as_int
+    blocks_processed = int(math.ceil(message_as_int.bit_length() / BLOCK_SIZE))
+    message_blocks = []
+    for i in range(blocks_processed):
+        block = message_as_int >> ((blocks_processed - 1 - i) * BLOCK_SIZE) & ((1 << BLOCK_SIZE) - 1)
+        message_blocks.append(block)
+    return message_blocks
 
 # create a 80 32 bit word array from a 512 bit block or 16 32 bit vals
 def create_word_schedule(block):
@@ -94,21 +99,19 @@ class SHA1:
             return self.constants[3]
 
     def parse_to_blocks(self):
-        message_as_int = int.from_bytes(self.message, byteorder='big')
-        message_as_int = padd_message(message_as_int, len(self.message) + (self.blocks_processed * (512 // 8)))
+        blocks_calc = (len(self.message)) // PROCESS_LIMIT
+
+        message_as_int = int.from_bytes(self.message[:blocks_calc*PROCESS_LIMIT], byteorder='big')
         message_blocks = []
-        blocks_calc = int(math.ceil(message_as_int.bit_length() / BLOCK_SIZE))
         for i in range((blocks_calc-1)*BLOCK_SIZE, -1, -BLOCK_SIZE):
             tmp = (message_as_int >> i) & ((1 << BLOCK_SIZE) - 1)
             message_blocks.append(tmp)
 
+        del self.message[:blocks_calc*PROCESS_LIMIT]
         return message_blocks
 
-    def Sum(self):
-        # do parsing
-        message_blocks = self.parse_to_blocks()
-        for block in message_blocks:
-            # this will come pretty directly from the NIST document
+    def process_block(self, block):
+        # this will come pretty directly from the NIST document
             words = create_word_schedule(block)
             # [a, b, c, d, e] [0, 1, 2, 3, 4]
             working_vars = copy.copy(self.hash_vals)
@@ -124,6 +127,12 @@ class SHA1:
                 working_vars[0] = temp_word
             for i in range(5):
                 self.hash_vals[i] = (self.hash_vals[i] + working_vars[i]) & ((1<<32) - 1)
+
+    def Sum(self):
+        # do parsing
+        message_blocks = padd_message(self.message, len(self.message) + (self.blocks_processed * (512 // 8)))
+        for block in message_blocks:
+            self.process_block(block)
         final_res = 0
 
         for i in range(len(self.hash_vals)):
@@ -136,11 +145,16 @@ class SHA1:
         add_to_msg = message_to_add
         if type(message_to_add) is str:
             add_to_msg = str.encode(message_to_add)
-
         if (len(self.message) + len(add_to_msg) + (self.blocks_processed * 64)) > ((2**64) / 2**3):
             raise ValueError("The message must be less than 2**64 bits long.")
+        elif len(self.message) >= PROCESS_LIMIT:
+            blocks = self.parse_to_blocks()
+            for block in blocks:
+                self.blocks_processed += 1
+                self.process_block(block)
         else:
             self.message += add_to_msg
+            
         return
 
 # msg schedule 32 bit 80 words

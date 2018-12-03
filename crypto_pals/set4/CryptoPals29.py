@@ -39,7 +39,10 @@ def main():
         print("New tag is ", new_tag)
 
         for j in range(1, SHA1.PROCESS_LIMIT):
-            try_msg = SHA1.padd_message(int.from_bytes(message, byteorder='big'), j + len(original_msg))
+            try_msg_blocks = SHA1.padd_message(message, j + len(original_msg))
+            try_msg = 0
+            for idx,try_block in enumerate(try_msg_blocks):
+                try_msg += (try_block) << (512 * (len(try_msg_blocks) - 1 - idx))
             try_msg = try_msg.to_bytes((try_msg.bit_length() + 7) // 8, byteorder='big')
             try_msg += str.encode(new_msg)
             if validate_msg_for_key(try_msg, new_tag):
