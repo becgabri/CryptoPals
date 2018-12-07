@@ -6,19 +6,15 @@ from flask import Flask, request
 
 
 app = Flask(__name__)
-app.config['DEBUG'] = True
-
+#app.config['DEBUG'] = True
+# LUCKY 13 Attack 
 opad_byte = (int('0x' + ('5c' * SHA1.PROCESS_LIMIT), 16)).to_bytes(SHA1.PROCESS_LIMIT, byteorder='big')
 ipad_byte = (int('0x' + ('36' * SHA1.PROCESS_LIMIT), 16)).to_bytes(SHA1.PROCESS_LIMIT, byteorder='big')
-key_as_int = int("badcafe", 16)
-#HMAC_KEY = key_as_int.to_bytes((key_as_int.bit_length() + 7) // 8,byteorder='big')
-HMAC_KEY = "battlefield"
-#CryptoPals29.pick_a_key()
+HMAC_KEY = ""
 
 #HMAC ripped straight from https://en.wikipedia.org/wiki/HMAC
 # key is assumed to be a string as is message or at least a byte array
 def HMAC_SHA(key, message):
-    #import pdb; pdb.set_trace()
     key_to_use = bytearray()
     if len(key) * 8 > SHA1.BLOCK_SIZE:
         key_for_sha = SHA1.SHA1()
@@ -30,8 +26,7 @@ def HMAC_SHA(key, message):
         else:
             key_to_use = key_to_use + str.encode(key, encoding='utf-8')
         key_to_use = key_to_use + bytearray(SHA1.PROCESS_LIMIT - len(key_to_use))
-        #for i in range(SHA1.PROCESS_LIMIT - len(key_to_use)):
-        #   key_to_use.append(0)
+
     inner_hmac = SHA1.SHA1()
     inner_msg = bytearray()
     for i in range(SHA1.PROCESS_LIMIT):
@@ -45,7 +40,6 @@ def HMAC_SHA(key, message):
     return outer_hmac.Sum()
 
 def insecure_compare(arg1, arg2):
-    import pdb; pdb.set_trace()
     if len(arg1) != len(arg2):
         return False
     for i in range(len(arg1)):
@@ -56,7 +50,6 @@ def insecure_compare(arg1, arg2):
         
 @app.route('/test',methods=['POST','GET'])
 def test_file():
-    global HMAC_KEY
     if request.method == 'GET':
         html = '<form action="" method="post" >' + \
         '<label for="signature"> Enter the signature over the hash of the file (in hex): </label> ' + \
@@ -71,10 +64,6 @@ def test_file():
 
     filename = request.form['file_t']
     signature = request.form['signature']
-    #import pdb; pdb.set_trace()
-
-    if HMAC_KEY == "":
-        HMAC_KEY = CryptoPals29.pick_a_key()
 
     if os.path.exists(filename):
         with open(filename, "r") as read_file:
@@ -96,7 +85,7 @@ def test_file():
 
 
 if __name__ == "__main__":
-    res = HMAC_SHA("key", "The quick brown fox jumps over the lazy dog")
-    res2 = HMAC_SHA("", "")
-    import pdb; pdb.set_trace()
+    global HMAC_KEY
+    if HMAC_KEY == "":
+        HMAC_KEY = CryptoPals29.pick_a_key()
     app.run(port=9000)
