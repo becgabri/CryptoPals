@@ -2,57 +2,76 @@ import os
 import SHA1
 import CryptoPals29
 import time
-from flask import Flask, request, status
+from flask import Flask, request
+
 
 app = Flask(__name__)
+app.config['DEBUG'] = True
 
 opad_byte = (int('0x' + ('5c' * SHA1.PROCESS_LIMIT), 16)).to_bytes(SHA1.PROCESS_LIMIT, byteorder='big')
 ipad_byte = (int('0x' + ('36' * SHA1.PROCESS_LIMIT), 16)).to_bytes(SHA1.PROCESS_LIMIT, byteorder='big')
-HMAC_KEY = "" 
-CryptoPals29.pick_a_key()
+key_as_int = int("badcafe", 16)
+#HMAC_KEY = key_as_int.to_bytes((key_as_int.bit_length() + 7) // 8,byteorder='big')
+HMAC_KEY = "battlefield"
+#CryptoPals29.pick_a_key()
 
 #HMAC ripped straight from https://en.wikipedia.org/wiki/HMAC
 # key is assumed to be a string as is message or at least a byte array
 def HMAC_SHA(key, message):
-    key_to_use = b""
+    #import pdb; pdb.set_trace()
+    key_to_use = bytearray()
     if len(key) * 8 > SHA1.BLOCK_SIZE:
         key_for_sha = SHA1.SHA1()
         key_for_sha.Update(key)
         key_to_use = key_for_sha.Sum()
     else:
-        key_to_use = str.encode(key)
-        for i in range(SHA1.PROCESS_LIMIT - len(key_to_use)):
-            key_to_use.append(0)
+        if type(key) is bytes:
+            key_to_use = bytearray(key)
+        else:
+            key_to_use = key_to_use + str.encode(key, encoding='utf-8')
+        key_to_use = key_to_use + bytearray(SHA1.PROCESS_LIMIT - len(key_to_use))
+        #for i in range(SHA1.PROCESS_LIMIT - len(key_to_use)):
+        #   key_to_use.append(0)
     inner_hmac = SHA1.SHA1()
     inner_msg = bytearray()
-    for i in range(16):
+    for i in range(SHA1.PROCESS_LIMIT):
         inner_msg.append(key_to_use[i] ^ ipad_byte[i])
     inner_hmac.Update(inner_msg + str.encode(message))
     outer_hmac = SHA1.SHA1()
     outer_msg = bytearray()
-    for i in range(16):
+    for i in range(SHA1.PROCESS_LIMIT):
         outer_msg.append(key_to_use[i] ^ opad_byte[i])
     outer_hmac.Update(outer_msg + inner_hmac.Sum())
     return outer_hmac.Sum()
 
 def insecure_compare(arg1, arg2):
-    for i in len(arg1):
-        if i >= len(arg2):
-            return False
+    import pdb; pdb.set_trace()
+    if len(arg1) != len(arg2):
+        return False
+    for i in range(len(arg1)):
         if arg1[i] != arg2[i]:
             return False 
         time.sleep(.050)
     return True
         
-@app.route('/test')
+@app.route('/test',methods=['POST','GET'])
 def test_file():
     global HMAC_KEY
-    if not 'file' in request.args or not 'signature' in request.args:
-        # return a bad request
-        return "Missing Parameters", status.HTTP_400_BAD_REQUEST
+    if request.method == 'GET':
+        html = '<form action="" method="post" >' + \
+        '<label for="signature"> Enter the signature over the hash of the file (in hex): </label> ' + \
+        '<input type="text" name="signature" id="signature">' + \
+        '<br/> <label for="file_t"> File to Upload: </label>' + \
+        '<input type="file" name="file_t" id="file_t">' + \
+        '<input type="submit" value="Upload and Verify"> </form>'
+        return (html, 200)
 
-    filename = request.args.get('file')
-    signature = request.args.get('signature')
+    if not 'file_t' in request.form or not 'signature' in request.form:
+        return ("Invalid Request", 400)
+
+    filename = request.form['file_t']
+    signature = request.form['signature']
+    #import pdb; pdb.set_trace()
 
     if HMAC_KEY == "":
         HMAC_KEY = CryptoPals29.pick_a_key()
@@ -61,14 +80,23 @@ def test_file():
         with open(filename, "r") as read_file:
             read_values = read_file.read()
         MAC_of_file = HMAC_SHA(HMAC_KEY, read_values)
-        if insecure_compare(MAC_of_file, signature):
-            return "Success", status.HTTP_200_OK
+        # convert hex digest to bytes 
+        try:
+            signature_as_bytes = int(signature,16).to_bytes(20, byteorder='big')
+        except:
+            return ("Signature not in correct format", 400)
+
+        if insecure_compare(MAC_of_file, signature_as_bytes):
+            return ("Success", 200)
         else:
-            return "Invalid MAC", status.HTTP_500_INTERNAL_SERVER_ERROR
+            return ("Invalid MAC", 500)
     else:
-        return "File does not exist", status.HTTP_400_BAD_REQUEST
+        return ("File does not exist", 400)
 
 
 
 if __name__ == "__main__":
-    app.run()
+    res = HMAC_SHA("key", "The quick brown fox jumps over the lazy dog")
+    res2 = HMAC_SHA("", "")
+    import pdb; pdb.set_trace()
+    app.run(port=9000)
