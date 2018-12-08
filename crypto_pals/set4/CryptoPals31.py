@@ -3,10 +3,26 @@ import SHA1
 import CryptoPals29
 import time
 from flask import Flask, request
+from logging.config import dictConfig
 
+dictConfig({
+    'version': 1,
+    'formatters': {'default': {
+        'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+    }},
+    'handlers': {'wsgi': {
+        'class': 'logging.FileHandler',
+        'filename': '/dev/null',
+        #'filename': 'web_proc.log',
+        'formatter': 'default',
+    }},
+    'root': {
+        'level': 'INFO',
+        'handlers': ['wsgi']
+    }
+})
 
 app = Flask(__name__)
-#app.config['DEBUG'] = True
 # LUCKY 13 Attack 
 opad_byte = (int('0x' + ('5c' * SHA1.PROCESS_LIMIT), 16)).to_bytes(SHA1.PROCESS_LIMIT, byteorder='big')
 ipad_byte = (int('0x' + ('36' * SHA1.PROCESS_LIMIT), 16)).to_bytes(SHA1.PROCESS_LIMIT, byteorder='big')
@@ -58,7 +74,7 @@ def test_file():
         '<input type="file" name="file_t" id="file_t">' + \
         '<input type="submit" value="Upload and Verify"> </form>'
         return (html, 200)
-
+        
     if not 'file_t' in request.form or not 'signature' in request.form:
         return ("Invalid Request", 400)
 
@@ -83,9 +99,14 @@ def test_file():
         return ("File does not exist", 400)
 
 
+def run_server():
+    global HMAC_KEY
+    if HMAC_KEY == "":
+        HMAC_KEY = CryptoPals29.pick_a_key()
+    app.run(port=9000)
+    
 
 if __name__ == "__main__":
-    global HMAC_KEY
     if HMAC_KEY == "":
         HMAC_KEY = CryptoPals29.pick_a_key()
     app.run(port=9000)
