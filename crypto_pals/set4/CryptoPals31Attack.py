@@ -10,7 +10,6 @@ def convert_to_hex(byte_repr):
 def uncoverCorrectFileMac(filename):
     if not os.path.exists(filename):
         raise ValueError("File does not exist")
-    # 2 hex characters is a byte, SHA1 output is 160 bits so 20 bytes and thus 40 hex chars 
     hex_mac_guess = bytearray(20)
     request_body = {
         "file_t": filename,
@@ -28,14 +27,8 @@ def uncoverCorrectFileMac(filename):
             resp = requests.post("http://localhost:9000/test", data=request_body)
             if resp.status_code != 500:
                 print(resp.status_code)
-            #time_kill = time.time() - timer_value
             time_results.append(time.perf_counter() - timer_value)
-            #if (float(time_kill) - baseline) >= .025:
-            #   print("Exceeded time difference!")
-            #    found_byte_value = True
-            #else:
             byte_val += 1
-        #print(time_results)
         std_dev = statistics.stdev(time_results)
         mean = statistics.mean(time_results)
         print("Population varies with from mean {} with a standard deviation of {}".format(std_dev, mean))

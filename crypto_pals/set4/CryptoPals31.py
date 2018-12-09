@@ -13,7 +13,6 @@ dictConfig({
     'handlers': {'wsgi': {
         'class': 'logging.FileHandler',
         'filename': '/dev/null',
-        #'filename': 'web_proc.log',
         'formatter': 'default',
     }},
     'root': {
@@ -23,7 +22,7 @@ dictConfig({
 })
 
 app = Flask(__name__)
-# LUCKY 13 Attack 
+ 
 opad_byte = (int('0x' + ('5c' * SHA1.PROCESS_LIMIT), 16)).to_bytes(SHA1.PROCESS_LIMIT, byteorder='big')
 ipad_byte = (int('0x' + ('36' * SHA1.PROCESS_LIMIT), 16)).to_bytes(SHA1.PROCESS_LIMIT, byteorder='big')
 HMAC_KEY = ""
@@ -86,7 +85,6 @@ def test_file():
         with open(filename, "r") as read_file:
             read_values = read_file.read()
         MAC_of_file = HMAC_SHA(HMAC_KEY, read_values)
-        # convert hex digest to bytes 
         try:
             signature_as_bytes = int(signature,16).to_bytes(20, byteorder='big')
         except:
