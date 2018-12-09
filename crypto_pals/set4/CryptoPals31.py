@@ -61,7 +61,8 @@ def insecure_compare(arg1, arg2):
     for i in range(len(arg1)):
         if arg1[i] != arg2[i]:
             return False 
-        time.sleep(.050)
+        #time.sleep(.050)
+        time.sleep(.005)
     return True
         
 @app.route('/test',methods=['POST','GET'])

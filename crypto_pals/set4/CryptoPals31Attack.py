@@ -38,6 +38,7 @@ def uncoverCorrectFileMac(filename):
         #print(time_results)
         std_dev = statistics.stdev(time_results)
         mean = statistics.mean(time_results)
+        print("Population varies with from mean {} with a standard deviation of {}".format(std_dev, mean))
         max_diff = max(time_results)
         byte_idx = time_results.index(max_diff)
         print("Biggest difference is {} for byte value {} with {} std dev above mean".format(max_diff,byte_idx, (max_diff - mean) / std_dev))
@@ -59,8 +60,10 @@ def main():
     web_proc = multiprocessing.Process(target=run_server, args=())
     # need to do some timing to make sure the server is up before sending the first request
     web_proc.start()
-    time.sleep(5)
+    time.sleep(20)
+    print("Done sleeping, starting attack")
     uncoverCorrectFileMac("good_stuff.txt")
+    web_proc.terminate()
     return
 
 if __name__ == "__main__":
