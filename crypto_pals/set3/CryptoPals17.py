@@ -78,7 +78,6 @@ def break_CBC_confidentiality():
                 # this is needed right at the end b/c if tst ^ padd_val cancel out and the message
                 # is padded validly then it will still be valid
                 if idx == len(target) - block_size and i == 0 and tst == padd_val:
-                    import pdb; pdb.set_trace()
                     continue
                 current_tst[(block_size * quot_start) + block_size - 1 - i] = chr(ord(ct_chr) ^ tst ^ padd_val)
 
@@ -91,7 +90,6 @@ def break_CBC_confidentiality():
             # **P_i = tst \xor P_i so.... P_i = **P_i \xor tst
             decrypted_block[block_size - 1 - i] = chr(tst)
         recovered_pt += ''.join(decrypted_block)
-    import pdb; pdb.set_trace()
     print(recovered_pt)
 
 

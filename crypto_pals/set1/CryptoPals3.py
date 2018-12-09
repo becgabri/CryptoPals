@@ -76,7 +76,6 @@ def xorBrute(string_input):
             dictionary_vect.append(letter_frequencies[letter.upper()])
         else:
             dictionary_vect.append(0.0)
-    #import pdb; pdb.set_trace()
     for test_enc in range(256):
         # need a byte array of the length of the string input
         new_str = bytes([test_enc] * len(string_input))

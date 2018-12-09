@@ -36,7 +36,6 @@ def profile_for(user):
     return "&".join(return_str)
 
 def encrypt_profile(profile):
-    import pdb; pdb.set_trace()
     return CryptoPals7.encryption_mode_ECB(GLOBAL_AES_KEY, profile, CryptoPals7.encrypt_aes)
 
 def decrypt_and_parse_encrypted_prof(profile):

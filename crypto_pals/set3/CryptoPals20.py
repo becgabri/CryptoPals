@@ -29,7 +29,6 @@ def main():
         for line in new_list:
             full_list += line
         decrypt_text = CryptoPals6.crack_single_key(len(smallest_line), full_list)
-        import pdb; pdb.set_trace()
         for idx,orig_add in enumerate(all_lines):
             decrypt_text[idx] = decrypt_text[idx] + orig_add[smallest_num:]
         while True:

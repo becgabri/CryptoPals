@@ -67,7 +67,6 @@ def main():
     random.seed(1)
     #r1 = random.getstate()
     #twister.state = list(r1[1][:-1])
-    #import pdb; pdb.set_trace()
     for poll in range(0,5):
         extracted_value = twister.extract_num()
         print("Poll Number {} with twister value {}".format(poll, extracted_value))

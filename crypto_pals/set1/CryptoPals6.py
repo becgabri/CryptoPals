@@ -52,7 +52,6 @@ def crack_single_key(key_len, plaintext):
     possible_keys = perm(candidates)
     # this is bytes
     testtextHex = plaintext
-    import pdb; pdb.set_trace()
 
     for idx,key in enumerate(possible_keys):
         padding = bytes(key * math.ceil(len(testtextHex) / len(key)))

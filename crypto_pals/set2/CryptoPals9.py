@@ -13,7 +13,6 @@ def main():
 
     padd_out(bytearray_plain, 20)
 
-    import pdb; pdb.set_trace()
 
 if __name__ == "__main__":
     main()
