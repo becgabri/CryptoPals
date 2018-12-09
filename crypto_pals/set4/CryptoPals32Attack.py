@@ -22,7 +22,7 @@ def run_subtest(mac_guess, curr_idx, test_val, request_body):
     # restore state
     mac_guess[curr_idx] = 0
     mac_guess[curr_idx + 1] = 0
-    return avg_time / 10.0
+    return avg_time / 5.0
 
 def uncoverCorrectFileMac(filename):
     if not os.path.exists(filename):
