@@ -1,4 +1,4 @@
-import multiprocessing, time, os
+import multiprocessing, time, os, sys
 import requests, json, math, statistics
 from CryptoPals31 import run_server
 
@@ -50,12 +50,15 @@ def uncoverCorrectFileMac(filename):
     
 
 def main():
+    if len(sys.argv) != 2:
+        print("Correct usage is python3 {} [filename]".format(sys.argv[0]))
+        return
     web_proc = multiprocessing.Process(target=run_server, args=())
     # need to do some timing to make sure the server is up before sending the first request
     web_proc.start()
     time.sleep(20)
     print("Done sleeping, starting attack")
-    uncoverCorrectFileMac("good_stuff.txt")
+    uncoverCorrectFileMac(sys.argv[1])
     web_proc.terminate()
     return
 

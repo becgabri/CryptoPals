@@ -1,4 +1,4 @@
-import multiprocessing, time, os
+import multiprocessing, time, os, sys
 import requests, json, math, statistics
 from CryptoPals31 import run_server
 
@@ -12,7 +12,7 @@ def run_subtest(mac_guess, curr_idx, test_val, request_body):
         raise ValueError("Can only run a subtest for smaller indices")
     avg_time = 0.0
     mac_guess[curr_idx] = test_val
-    for i in range(5):
+    for i in range(10):
         mac_guess[curr_idx + 1] = i
         request_body['signature'] = convert_to_hex(mac_guess)
         start = time.time()
@@ -22,7 +22,7 @@ def run_subtest(mac_guess, curr_idx, test_val, request_body):
     # restore state
     mac_guess[curr_idx] = 0
     mac_guess[curr_idx + 1] = 0
-    return avg_time / 5.0
+    return avg_time / 10.0
 
 def uncoverCorrectFileMac(filename):
     if not os.path.exists(filename):
@@ -33,11 +33,13 @@ def uncoverCorrectFileMac(filename):
         "file_t": filename,
         "signature": convert_to_hex(hex_mac_guess)
     }
-    
-    for digest_idx in range(len(hex_mac_guess) - 1):
+    old_best_time = -1
+    prev_byte_test = -1
+    digest_idx = 0
+    while digest_idx < (len(hex_mac_guess) - 1):
         print("Trying to find index {}".format(digest_idx))
         time_results = [(i, 0) for i in range(256)]
-        for it in range(3):
+        for it in range(2):
             byte_val = 0
             while byte_val <= 255:
                 hex_mac_guess[digest_idx] = byte_val
@@ -47,11 +49,9 @@ def uncoverCorrectFileMac(filename):
                 resp = requests.post("http://localhost:9000/test", data=request_body)
                 time_difference = time.time() - timer_value
                 time_results[byte_val] = (time_results[byte_val][0], time_results[byte_val][1] + time_difference)
-                #time_results[byte_val][1] += time_difference
-                #.append((byte_val, avg_two_trials / 2.0))
                 byte_val += 1
         for idx in range(len(time_results)):
-            avg_res = time_results[idx][1] / 3.0
+            avg_res = time_results[idx][1] / 2.0
             time_results[idx] = (time_results[idx][0], avg_res)
         solely_times = list(map(lambda pair : pair[1], time_results))
         std_dev = statistics.stdev(solely_times)
@@ -63,11 +63,16 @@ def uncoverCorrectFileMac(filename):
         for test in time_results[:5]:
             res = run_subtest(hex_mac_guess, digest_idx, test[0], request_body)
             best_avg_time_byte_pair = (res, test[0]) if res > best_avg_time_byte_pair[0] else best_avg_time_byte_pair
-
-        max_diff = max(time_results)
-        byte_idx = time_results.index(max_diff)
+ 
         print("Biggest average time for next byte test is {} for byte value {}".format(best_avg_time_byte_pair[0], best_avg_time_byte_pair[1]))
-        hex_mac_guess[digest_idx] = best_avg_time_byte_pair[1]
+        if (old_best_time + 0.005) <= best_avg_time_byte_pair[0] or prev_byte_test == best_avg_time_byte_pair[1]: 
+            hex_mac_guess[digest_idx] = best_avg_time_byte_pair[1]
+            old_best_time = best_avg_time_byte_pair[0]
+            prev_byte_test = -1
+            digest_idx += 1
+        else:
+            prev_byte_test = best_avg_time_byte_pair[1]
+            print("Failed, re-doing round")
     # try last byte by hand, only 256 options now
     for last_byte in range(256):
         hex_mac_guess[-1] = last_byte
@@ -80,13 +85,18 @@ def uncoverCorrectFileMac(filename):
     print("Fail :(")   
 
 def main():
+    if len(sys.argv) != 2:
+        print("Correct usage is python3 {} [filename]".format(sys.argv[0]))
+        return
+
     web_proc = multiprocessing.Process(target=run_server, args=())
     # need to do some timing to make sure the server is up before sending the first request
     web_proc.start()
-    time.sleep(10)
+    time.sleep(20)
     print("Done sleeping, starting attack")
-    uncoverCorrectFileMac("good_stuff.txt")
+    uncoverCorrectFileMac(sys.argv[1])
     web_proc.terminate()
+
     return
 
 if __name__ == "__main__":
