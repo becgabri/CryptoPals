@@ -25,7 +25,8 @@ def test_ioc(test_string):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage is python3 %s [input_file]".format(sys.argv[0]))
+        print("Usage is python3 {} [input_file]".format(sys.argv[0]))
+        sys.exit(1)
     file_open = sys.argv[1]
     with open(file_open, "r") as file_in:
         for line in file_in.readlines():

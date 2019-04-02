@@ -11,7 +11,7 @@ def hexToRaw(hex_str):
 def hexXOR(arg1, arg2):
     if len(arg1) != len(arg2):
         raise ValueError("Hex XOR arguments should be the same")
-
+    import pdb; pdb.set_trace()
     max_len = max(len(arg1), len(arg2))
 
     res = int.from_bytes(arg1, byteorder='big') ^ int.from_bytes(arg2, byteorder='big')

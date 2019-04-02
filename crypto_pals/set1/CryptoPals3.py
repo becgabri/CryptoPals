@@ -79,7 +79,7 @@ def xorBrute(string_input):
     for test_enc in range(256):
         # need a byte array of the length of the string input
         new_str = bytes([test_enc] * len(string_input))
-        decryption = hexXOR(string_input, new_str)
+        decryption = hexXOR(int.to_bytes(int(string_input, 16)), new_str)
         #decryption = binascii.unhexlify(decryption)
 
         if any(chr(x) not in string.printable for x in decryption):
