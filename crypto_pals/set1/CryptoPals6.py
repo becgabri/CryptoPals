@@ -2,7 +2,7 @@ import sys
 import base64
 import binascii
 import math
-from crypto_pals.set1.CryptoPals1 import hexXOR
+from crypto_pals.set1.CryptoPals2 import hexXOR
 from crypto_pals.set1.CryptoPals3 import xorBrute, hexToAsciiPrint
 from crypto_pals.set1.permutation import perm
 
@@ -20,11 +20,7 @@ def hamming_dist(string1, string2):
     if type(string2) is str:
         string2 = string2.encode()
     if not type(string1) is bytes or not type(string2) is bytes:
-        raise TypeError("Hamming distance only accepts string and byte arguments")
-    # this is not required actually, its shouldn't be?
-    #if len(string1) != len(string2):
-    #    print("Strings are not the same distance")
-    #    sys.exit()
+        raise TypeError("Hamming distance only accepts byte arguments")
     # xor the byte string representation of the strings
     res = int.from_bytes(string1, byteorder='big') ^ \
         int.from_bytes(string2, byteorder='big')
@@ -32,6 +28,7 @@ def hamming_dist(string1, string2):
     return count_ones(res)
 
 def crack_single_key(key_len, plaintext):
+    print("Attempting key length {}...".format(key_len))
     encrypted_with_sameKey = []
     # key_pair[0] is the key length
     for index in range(key_len):
@@ -58,19 +55,30 @@ def crack_single_key(key_len, plaintext):
         padding = padding[:len(testtextHex)]
         final_res = hexXOR(padding, testtextHex)
         print("Key index in array: {}".format(idx))
-        for i in range(0, len(final_res) - key_len + 1, key_len):
-            print('{}\n {}'.format((i // key_len), (final_res[i:i+key_len]).decode('utf-8')))
-    resp = input("Input best guess key index")
+        if key_len < 10: 
+            print("Beginning of potential plaintext: {}".format((final_res[0:2*key_len]).decode('utf-8')))
+        else:
+            print("Beginning of potential plaintext: {}".format((final_res[0:10]).decode('utf-8'))) 
+        #for i in range(0, len(final_res) - key_len + 1, key_len):
+        #    print('{}\n {}'.format((i // key_len), (final_res[i:i+key_len]).decode('utf-8')))
+    if len(possible_keys) == 0:
+        return
+    resp = input("Input best guess key index (-1 for none): ")
     key_guess = int(resp)
-    if key_guess < len(possible_keys):
+    
+    if key_guess < len(possible_keys) and key_guess >= 0:
         key = possible_keys[key_guess]
         padding = bytes(key * math.ceil(len(testtextHex) / len(key)))
         padding = padding[:len(testtextHex)]
         final_res = hexXOR(padding, testtextHex)
-        result = []
+        result = bytearray()
         for i in range(0, len(final_res) - key_len + 1, key_len):
-            result.append(bytearray(final_res[i:i+key_len]))
-        return result
+            result += bytearray(final_res[i:i+key_len])
+        print("{}\nKey: {}".format(result.decode('utf-8'), bytes(key).decode('utf-8')))
+        return True
+    else:
+        print("Did not find a key, continuing...")
+        return False 
 
 def crack_vigenere(plaintext):
     likely_key_lens = []
@@ -85,18 +93,19 @@ def crack_vigenere(plaintext):
         likely_key_lens.append((key_length, sum_hamming_dist))
     # we do want the default here because closer to 0 is better
     sorted_list = sorted(likely_key_lens, key=lambda pair: pair[1])
-    # chop off up until like the third key
-    sorted_list = sorted_list[1:3]
+    sorted_list = sorted_list[0:10]
 
     for key_pair in sorted_list:
-        crack_single_key(key_pair[0], plaintext)
-
+        if crack_single_key(key_pair[0], plaintext):
+            return
+        
 def main():
-    #test_str1 = "this is a test"
-    #test_str2 = "wokka wokka!!!"
-    #print("This is the distance between the test strings:")
-    #print("{}".format(hamming_dist(test_str1, test_str2)))
-
+    """
+    test_str1 = "this is a test"
+    test_str2 = "wokka wokka!!!"
+    print("This is the distance between the test strings:")
+    print("{}".format(hamming_dist(test_str1, test_str2)))
+    """
     if len(sys.argv) != 2:
         print("Usage is python3 {} [inputFile]".format(sys.argv[0]))
         return

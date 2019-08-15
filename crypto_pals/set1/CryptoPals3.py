@@ -4,7 +4,7 @@ import os.path
 import binascii
 import math
 import string
-from crypto_pals.set1.CryptoPals1 import hexXOR
+from crypto_pals.set1.CryptoPals2 import hexXOR
 
 dictionary_vect = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.18093922651933703, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.012430939226519336, 0.0, 0.0, 0.0, 0.0, 0.004143646408839779, 0.0, 0.0013812154696132596, 0.0, 0.0013812154696132596, 0.0013812154696132596, 0.0, 0.0, 0.0, 0.0013812154696132596, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0013812154696132596, 0.0, 0.0027624309392265192, 0.0027624309392265192, 0.0013812154696132596, 0.0013812154696132596, 0.0, 0.0, 0.0013812154696132596, 0.0, 0.012430939226519336, 0.0013812154696132596, 0.0013812154696132596, 0.0013812154696132596, 0.0013812154696132596, 0.0027624309392265192, 0.0, 0.0, 0.0013812154696132596, 0.0027624309392265192, 0.0013812154696132596, 0.0027624309392265192, 0.0, 0.0013812154696132596, 0.004143646408839779, 0.0, 0.0013812154696132596, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.06077348066298342, 0.016574585635359115, 0.019337016574585635, 0.024861878453038673, 0.06077348066298342, 0.008287292817679558, 0.026243093922651933, 0.04005524861878453, 0.06629834254143646, 0.004143646408839779, 0.015193370165745856, 0.026243093922651933, 0.023480662983425413, 0.06629834254143646, 0.06767955801104972, 0.020718232044198894, 0.0013812154696132596, 0.027624309392265192, 0.03729281767955801, 0.06906077348066299, 0.026243093922651933, 0.006906077348066298, 0.013812154696132596, 0.0027624309392265192, 0.016574585635359115, 0.0013812154696132596, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
@@ -63,7 +63,7 @@ def cosine_sim(vector1, vector2):
 # string input is bytes argument
 # returns a list of byte encodings where the similarity was above 0 with some other
 # stipulations, ALL ARE REPRESENTED AS INTEGERS
-def xorBrute(string_input):
+def xorBrute(string_input, printToTerm=False):
     populate_freq()
     # try and encrypt with a variety of byte values
     tests = []
@@ -79,7 +79,9 @@ def xorBrute(string_input):
     for test_enc in range(256):
         # need a byte array of the length of the string input
         new_str = bytes([test_enc] * len(string_input))
-        decryption = hexXOR(int.to_bytes(int(string_input, 16)), new_str)
+        #import pdb; pdb.set_trace()
+        decryption = hexXOR(string_input, new_str)
+        #decryption = hexXOR(int.to_bytes(int(string_input, 16)), new_str)
         #decryption = binascii.unhexlify(decryption)
 
         if any(chr(x) not in string.printable for x in decryption):
@@ -89,17 +91,18 @@ def xorBrute(string_input):
         for byte_val in range(256):
             byte_let = bytes([byte_val])
             frequency_vect.append(decryption.count(byte_let))
-        frequency_vect = [ val / float(len(decryption)) for val in frequency_vect]
+        #frequency_vect = [ val / float(len(decryption)) for val in frequency_vect]
         tests.append((test_enc, cosine_sim(frequency_vect, dictionary_vect)))
     assert(len(tests) == 256)
     most_likely_encoding = sorted(tests, key=lambda value: value[1], reverse=True)
     all_non_zero = []
     for pair in most_likely_encoding:
-        if pair[1] > 0.1:
+        if pair[1] > 0.00:
             all_non_zero.append(pair[0])
-            #xor_pad = bytes([pair[0]] * len(string_input))
-            #final_res = hexXOR(xor_pad, string_input)
-            #hexToAsciiPrint(binascii.hexlify(final_res))
+            xor_pad = bytes([pair[0]] * len(string_input))
+            final_res = hexXOR(xor_pad, string_input)
+            if printToTerm:
+                hexToAsciiPrint(binascii.hexlify(final_res))
     return all_non_zero
 
 def populate_freq():
@@ -122,7 +125,7 @@ def main(input_file, mode):
         sys.exit(2)
     if mode == "brute-force":
         plaintext = binascii.unhexlify(decryptThis)
-        results = xorBrute(binascii.unhexlify(decryptThis))
+        results = xorBrute(binascii.unhexlify(decryptThis), printToTerm=True)
         for res in results:
             xor_pad = bytes([res] * len(plaintext))
             final_res = hexXOR(xor_pad, plaintext)

@@ -1,10 +1,9 @@
-from CryptoPals3 import xorBrute
+from crypto_pals.set1.CryptoPals3 import xorBrute
 import sys
 import string, binascii
 
 
-def test_ioc(test_string):
-    test_bytes = binascii.unhexlify(test_string)
+def test_ioc(test_bytes):
     whole_len = 0
     sum = 0
     for let in string.ascii_uppercase:
@@ -31,5 +30,6 @@ if __name__ == "__main__":
     with open(file_open, "r") as file_in:
         for line in file_in.readlines():
             line = line.strip()
-            if test_ioc(line) > 0.05:
-                xorBrute(line)
+            byte_lines = binascii.unhexlify(line)
+            if test_ioc(byte_lines) > 0.05:
+                xorBrute(byte_lines)

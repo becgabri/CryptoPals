@@ -2,14 +2,14 @@
 import sys
 import os
 import math
-from CryptoPals1 import hexXOR
+import binascii
+from crypto_pals.set1.CryptoPals2 import hexXOR
 
 def repeatXOR(key, plaintext):
     padding = key * (math.ceil(len(plaintext) / len(key)))
     padding = padding[0:len(plaintext)]
-    word = hexXOR(padding.encode().hex(), plaintext.encode().hex())
-    string_res = word.decode()
-    print(string_res)
+    word = hexXOR(padding.encode(), plaintext.encode())
+    print("{}".format(binascii.hexlify(word)))
     return
 
 # writes to [plainttext_enc.[format]]
