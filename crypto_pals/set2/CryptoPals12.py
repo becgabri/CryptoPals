@@ -8,15 +8,13 @@ append_this = "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpc
 append_this = base64.b64decode(append_this)
 
 def close_oracle_copy(plaintext):
-    modded_text = ""
     if type(plaintext) is str:
         plaintext = plaintext + str(append_this, encoding='utf-8')
-    else:
-        plaintext.extend(append_this)
-    res = CryptoPals7.encryption_mode_ECB(AES_RAND_KEY, plaintext, CryptoPals7.encrypt_aes)
-    if type(plaintext) is str:
+        res = CryptoPals7.encryption_mode_ECB(AES_RAND_KEY, plaintext, CryptoPals7.encrypt_aes)
         plaintext = plaintext[:len(plaintext) - len(append_this)]
     else:
+        plaintext.extend(append_this)
+        res = CryptoPals7.encryption_mode_ECB(AES_RAND_KEY, bytes(plaintext), CryptoPals7.encrypt_aes)
         del plaintext[-1 * len(append_this):]
     return res
 
@@ -56,6 +54,7 @@ def main():
         quot_rem = divmod(known_len, block_size)
         # padd until you hit a remainder that is that high
         padding = bytearray([ord('A')] * (block_size - 1 - quot_rem[1]))
+        assert type(padding) is bytearray
         val_to_match = close_oracle_copy(padding)[block_size * quot_rem[0]:block_size * (quot_rem[0] + 1)]
         if len(plaintext) > 0:
             padding.extend(bytearray(plaintext,encoding='utf-8'))

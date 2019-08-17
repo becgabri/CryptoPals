@@ -112,9 +112,9 @@ class ShiftRowTests(unittest.TestCase):
             beg_state[idx] = GF28.GF28(value)
         for idx, value in enumerate(end_state):
             end_state[idx] = GF28.GF28(value)
-        new_state = CryptoPals7.inv_shift_rows(beg_state)
-        for idx, val in enumerate(new_state):
-            self.assertEqual(new_state[idx].number, end_state[idx].number)
+        CryptoPals7.inv_shift_rows(beg_state)
+        for idx, val in enumerate(beg_state):
+            self.assertEqual(beg_state[idx].number, end_state[idx].number)
 
     def test_row_shift(self):
         end_state = [
@@ -135,9 +135,9 @@ class ShiftRowTests(unittest.TestCase):
             beg_state[idx] = GF28.GF28(value)
         for idx, value in enumerate(end_state):
             end_state[idx] = GF28.GF28(value)
-        new_state = CryptoPals7.shift_rows(beg_state)
-        for idx, val in enumerate(new_state):
-            self.assertEqual(new_state[idx].number, end_state[idx].number)
+        CryptoPals7.shift_rows(beg_state)
+        for idx, val in enumerate(beg_state):
+            self.assertEqual(beg_state[idx].number, end_state[idx].number)
 
 class MixedColsTests(unittest.TestCase):
     def setUp(self):
@@ -220,8 +220,9 @@ class MixedColsTests(unittest.TestCase):
 
         for idx, num in enumerate(beg_state):
             self.assertEqual(end_state[idx].number, beg_state[idx].number)
-
+"""
 class Bit128Test(unittest.TestCase):
+    """
     def test_zero_key(self):
         plaintext = 'Perseverance man'
         plaintext_in_GF28 = []
@@ -247,7 +248,7 @@ class Bit128Test(unittest.TestCase):
 
         # TODO change to string at end or byte array (just not GF28)
         self.assertEqual(res_dec, plaintext)
-
+    
     def test_aes_blocks(self):
         plaintext= "Apple has inklin" + "Perseverance man"
         key = [3] * 15
@@ -256,6 +257,7 @@ class Bit128Test(unittest.TestCase):
         res = CryptoPals7.encryption_mode_ECB(key, plaintext, CryptoPals7.encrypt_aes)
         other_res = CryptoPals7.decryption_mode_ECB(key, res, CryptoPals7.decrypt_aes)
         self.assertEqual(other_res, plaintext)
+    
 
 class KeyExpandTest(unittest.TestCase):
     def setUp(self):

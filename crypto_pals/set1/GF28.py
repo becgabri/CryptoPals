@@ -1,5 +1,6 @@
 modulus_GF28 = bytes([1, 27])
 modulus_integer_GF28 = int.from_bytes(modulus_GF28, byteorder='big')
+modulus_bit_length = modulus_integer_GF28.bit_length()
 
 # Requires: num_a and num_b are integers
 # Returns: integer response that is multiplication
@@ -32,7 +33,7 @@ def xor_divide_quot_base_2(num_a, num_b):
 # Z_2 where num < the modulus GF28
 def mod_by_in_GF28(num):
     while (num >= (1 << 8)):
-        highest_exp = num.bit_length() - modulus_integer_GF28.bit_length()
+        highest_exp = num.bit_length() - modulus_bit_length
         num = num ^ (modulus_integer_GF28 << highest_exp)
     return num
 
@@ -76,14 +77,17 @@ class GF28:
 
     def __mul__(self, other):
         res = 0
-        for mask in range(other.number.bit_length()):
+        other_bit_length = other.number.bit_length()
+        for mask in range(other_bit_length):
             if (other.number & (1 << mask)):
                 # xor with a also shifted out that far
                 res = res ^ mod_by_in_GF28(self.number << mask)
                 #TODO this value should never be over the modulus -- check this
+                """
                 if (res >= (1 << (modulus_integer_GF28.bit_length() - 1))):
                     raise ValueError("Unexpected break from expectation: result in multiplication should never be over the modulus")
                     #res = res ^ modulus_integer_GF28
+                """
         return GF28(res, bypass_modcheck=True)
 
     def __repr__(self):

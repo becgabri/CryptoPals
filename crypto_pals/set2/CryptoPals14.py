@@ -32,6 +32,9 @@ def main():
     # -------------------------------------------------
     # figure out how much padding there is
     # ensure its ECB
+    print("WARNING: You should only be running this python script if you hate your machine. The AES implementation is pretty inefficient so expect this to take awhile.")
+    print("P.T. is also like 137 bytes so you're expecting something like 137 * 128 full rounds of the attack loop needing to be called")
+    print("Prepare yourself")
     block_size = find_oracle_copy_block_size(modified_oracle_copy)
     #TODO modify the detection oracle function
     #mode_str = detection_oracle(modified_oracle_copy)
@@ -59,7 +62,7 @@ def main():
     # from [random beg] [ padding ] [unknown str] | [ more unknown str ]
     # to [random beg] [padding] | [unknown str]
 
-    # this is why we need to delete one
+
     # modified from CryptoPals12
     # ---------------------------------------------------
     unknown_str_len = len(append_this)

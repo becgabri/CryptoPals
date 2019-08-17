@@ -46,6 +46,7 @@ def decrypt_and_parse_encrypted_prof(profile):
 def main():
     # step 1 : get role= to be at end of block
     cipher_text = encrypt_profile(profile_for("UrBaseRUs@a.z"))
+    decrypt_and_parse_encrypted_prof(cipher_text)
     admin = "a" * 10 + "admin" + str(bytearray([11] * 11), encoding='utf-8')
 
     enc_admin = encrypt_profile(profile_for(admin))[16:16*2]

@@ -36,13 +36,13 @@ def encryption_oracle(input):
     decision = random.randrange(2)
     if (decision == 0):
         # ECB
-        print("Used: ECB mode")
+        print("From encryption oracle: ECB mode")
         res = CryptoPals7.encryption_mode_ECB(key, feed_input,
             CryptoPals7.encrypt_aes)
         return res
     else:
         # CBC
-        print("Used: CBC mode")
+        print("From encryption oracle: CBC mode")
         res = CryptoPals7.ENCRYPTION_CBC_MODE(IV, key, feed_input,
             CryptoPals7.encrypt_aes)
         return res
@@ -57,15 +57,15 @@ def detection_oracle(blackbox):
             same_strs[encrypted_text[i:i+16]] = 0
         same_strs[encrypted_text[i:i+16]] += 1
     if max(same_strs.values()) > 1:
-        print("From Detection Oracle: ECB mode")
+        print("From detection oracle: ECB mode")
         return "ECB"
     else:
-        print("From Detection Oracle: CBC mode")
+        print("From detection oracle: CBC mode")
         return "CBC"
 
 
 if __name__ == "__main__":
-    use_detection_oracle = input("Would you like to use the detection_oracle?")
+    use_detection_oracle = input("Would you like to use the detection_oracle? ")
     if use_detection_oracle.startswith("y") or use_detection_oracle.startswith("Y"):
         detection_oracle(encryption_oracle)
     else:

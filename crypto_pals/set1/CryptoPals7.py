@@ -1,12 +1,14 @@
 import sys, getopt
-
 from crypto_pals.set1.build_subtable import create_table
 import os
 import json
 from crypto_pals.set1 import GF28
 import math
+import copy
 import base64
 import os.path
+
+
 # DISCLAIMER: This is an AES implementation that was made for fun. There are NO
 # guarantees on this software being secure or correct ... good thing I never signed that
 # foot shooting agreement ... 
@@ -51,14 +53,45 @@ def print_GF28_list(list_t):
 # Modifies: state
 def inv_sub_bytes(state):
     for idx, byte in enumerate(state):
-        state[idx] = GF28.GF28(INV_SUBS_TABLE[str(byte.number)])
+        state[idx] = GF28.GF28(INV_SUBS_TABLE[str(byte.number)], True)
     return
 
 # Requires: state is an array of length 16 of GF28 elements
 # Modifies: state
 def sub_bytes(state):
     for idx, byte in enumerate(state):
-        state[idx] = GF28.GF28(SUBS_TABLE[str(byte.number)])
+        state[idx] = GF28.GF28(SUBS_TABLE[str(byte.number)], True)
+    return
+
+# each shift in a row
+# can be represented as attempting to cycle through the
+# indices, (x + 1) mod 4,(x + 2) mod 4, (x + 3) mod 4
+# this function shifts elements through a row by step 
+# until reaching the original index
+def cycle_shift(state, row, col, step):
+    misplaced_elt = (state[row + col], col)
+    while (misplaced_elt[1] + step) % 4 != col:
+            new_col = (misplaced_elt[1] + step) % 4
+            tmp = (state[new_col + row], new_col)
+            state[new_col + row] = misplaced_elt[0]
+            misplaced_elt = tmp
+    # do the last step
+    state[row + col] = misplaced_elt[0]
+
+# Requires: state is an array of length 16 of GF28 elements
+# Modifies: N/A
+# Returns: the new state that should be recorded
+def shift_rows(state):
+    # only values this should be are 0, 4, 8, and 12
+    for shift_out in range(1,4):
+        row_selector = shift_out*4
+        cycle_shift(state, row_selector, 0, 4-shift_out)
+        # needed because x - 2 mod 4 has disjoint cycles (02)(13)
+        # whereas x-1 = x + 3 mod 4and x-3 = x + 1 mod 4 are both
+        # one cycle ie (0321) and (0123)
+        if shift_out == 2:
+            cycle_shift(state, row_selector, 1, 4-shift_out)
+           
     return
 
 # Requires: state is an array of length 16 of GF28 elements
@@ -66,28 +99,14 @@ def sub_bytes(state):
 # Returns: the new state that should be recorded
 def inv_shift_rows(state):
     # only values this should be are 0, 4, 8, and 12
-    new_state = [GF28.GF28(0)] * 16;
-    modified_start_idx = 0
-    for shift_out in range(0,4):
-        for inner_idx in range(0,4):
-            new_idx = modified_start_idx + ((inner_idx + shift_out) % 4)
-            new_state[new_idx] = state[modified_start_idx + inner_idx]
-        modified_start_idx += 4
-    return new_state
+    for shift_out in range(1,4):
+        row_selector = shift_out*4
+        cycle_shift(state, row_selector, 0, shift_out)
 
-# Requires: state is an array of length 16 of GF28 elements
-# Modifies: N/A
-# Returns: the new state that should be recorded
-def shift_rows(state):
-    # only values this should be are 0, 4, 8, and 12
-    new_state = [GF28.GF28(0)] * 16
-    modified_start_idx = 0
-    for shift_out in range(0,4):
-        for inner_idx in range(0,4):
-            new_idx = modified_start_idx + ((inner_idx - shift_out) % 4)
-            new_state[new_idx] = state[modified_start_idx + inner_idx]
-        modified_start_idx += 4
-    return new_state
+        if shift_out == 2:
+            cycle_shift(state, row_selector, 1, shift_out)
+
+    return
 
 
 # multiply each column of state matrix by the
@@ -123,12 +142,10 @@ def inv_mix_cols(state):
 # words in key are XOR'ed with COLUMNS
 # of the state
 def add_round_key(state, key):
-    result = [GF28.GF28(0)] * 16
-    for idx, val in enumerate(result):
+    for idx, val in enumerate(state):
         quot_rem = divmod(idx, 4)
-        result[idx] = state[idx] + key[quot_rem[1] * 4 + quot_rem[0]]
+        state[idx] = state[idx] + key[quot_rem[1] * 4 + quot_rem[0]]
         #result[idx] = state[idx] + key[idx]
-    return result
 
 # takes an array of length 4 and rotates it s.t.
 # the first byte is last and everything else is shifted once
@@ -186,6 +203,12 @@ def GF28_to_string(list_GF28):
         res.append(chr(elt.number))
     return "".join(res)
 
+
+def PKCS_padd(array_GF28): 
+    padding = 16 - (len(array_GF28) % 16)
+    array_GF28.extend([GF28.GF28(padding)] * padding)
+    return array_GF28
+
 # input is an array of state that has been unscrambled
 def strip_PKCS_padding(array_GF28):
     padding_amount = (array_GF28[-1]).number
@@ -208,16 +231,16 @@ def encrypt_aes(key, plaintext):
     key_padd = key_expansion(key)
     state = fill_state_array(plaintext)
 
-    state = add_round_key(state, key_padd[:4 * BYTES_PER_WORD])
+    add_round_key(state, key_padd[:4 * BYTES_PER_WORD])
     for round in range(1, 10):
         sub_bytes(state)
-        state = shift_rows(state)
+        shift_rows(state)
         state = mix_cols(state)
-        state = add_round_key(state, key_padd[round * (4 * BYTES_PER_WORD): (round + 1) * (4 * BYTES_PER_WORD)])
+        add_round_key(state, key_padd[round * (4 * BYTES_PER_WORD): (round + 1) * (4 * BYTES_PER_WORD)])
 
     sub_bytes(state)
-    state = shift_rows(state)
-    state = add_round_key(state, key_padd[ROUNDS * (4 * BYTES_PER_WORD):])
+    shift_rows(state)
+    add_round_key(state, key_padd[ROUNDS * (4 * BYTES_PER_WORD):])
 
     return unscramble_state(state)
 # key and ciphertext MUST be arrays of GF28 elts
@@ -226,16 +249,16 @@ def decrypt_aes(key, ciphertext):
     key_padd = key_expansion(key)
     state = fill_state_array(ciphertext)
 
-    state = add_round_key(state, key_padd[ROUNDS * (4 * BYTES_PER_WORD):])
+    add_round_key(state, key_padd[ROUNDS * (4 * BYTES_PER_WORD):])
     for round in range(1, 10):
-        state = inv_shift_rows(state)
+        inv_shift_rows(state)
         inv_sub_bytes(state)
-        state = add_round_key(state, key_padd[(ROUNDS - round) * (4 * BYTES_PER_WORD):(ROUNDS + 1 - round) * (4 * BYTES_PER_WORD)])
+        add_round_key(state, key_padd[(ROUNDS - round) * (4 * BYTES_PER_WORD):(ROUNDS + 1 - round) * (4 * BYTES_PER_WORD)])
         state = inv_mix_cols(state)
     # inverse sub, inverse shift, add round key, end
     inv_sub_bytes(state)
-    state = inv_shift_rows(state)
-    state = add_round_key(state, key_padd[0:(4 * BYTES_PER_WORD)])
+    inv_shift_rows(state)
+    add_round_key(state, key_padd[0:(4 * BYTES_PER_WORD)])
 
     return unscramble_state(state)
 
@@ -278,8 +301,7 @@ def encryption_mode_ECB(key, plaintext, encryption_alg):
     key_in_GF28 = modify_list_into_GF28(key)
 
     # use PKCS 7 padding
-    padding = 16 - (len(plaintext_in_GF28) % 16)
-    plaintext_in_GF28.extend([GF28.GF28(padding)] * padding)
+    PKCS_padd(plaintext_in_GF28)
 
     ciphertext_blocks = []
     for block in range(0, len(plaintext_in_GF28), 16):
@@ -295,6 +317,7 @@ def decryption_mode_ECB(key, ciphertext, decryption_alg):
     key_in_GF28 = modify_list_into_GF28(key)
     for block in range(0, len(ciphertext_in_GF28), 16):
         deciphered_blocks.extend(decryption_alg(key_in_GF28, ciphertext_in_GF28[block: block + 16]))
+
     plaintext = GF28_to_string(strip_PKCS_padding(deciphered_blocks))
     return plaintext
 
@@ -305,8 +328,7 @@ def ENCRYPTION_CBC_MODE(IV, key, text, encryption_alg):
     # modify key and plaintext
     plaintext_in_GF28 = modify_list_into_GF28(text)
     # use PKCS 7 padding
-    padding = 16 - (len(plaintext_in_GF28) % 16)
-    plaintext_in_GF28.extend([GF28.GF28(padding)] * padding)
+    PKCS_padd(plaintext_in_GF28)
 
     key_in_GF28 = modify_list_into_GF28(key)
     IV_in_GF28 = modify_IV_into_GF28(IV)
@@ -328,7 +350,8 @@ def DECRYPTION_CBC_MODE(IV, key, text, decryption_alg):
     IV_in_GF28 = modify_IV_into_GF28(IV)
     key_in_GF28 = modify_list_into_GF28(key)
     plaintext_blocks = []
-
+    if (len(ciphertext_in_GF28) % 16) != 0:
+        raise ValueError("Length of string is not a multiple of block size")
     for block in range(0, len(ciphertext_in_GF28), 16):
         previous_segment = ciphertext_in_GF28[block - 16:block] if block >= 16 else IV_in_GF28
         segment = ciphertext_in_GF28[block: block + 16]
@@ -340,15 +363,12 @@ def DECRYPTION_CBC_MODE(IV, key, text, decryption_alg):
     return plaintext
 
 
-def main(inputFile, keyFile, mode, type, isBase64):
+def main(inputFile, keyFile, mode, type_t, isBase64):
     key = ""
     input_text = ""
     if not os.path.exists(inputFile) or not os.path.exists(keyFile):
         raise OSError("Path not found")
     with open(inputFile, 'r') as in_f:
-        if type == 'decrypt' and isBase64:
-            input_text = base64.b64decode(in_f.read())
-        else:
             input_text = in_f.read()
     with open(keyFile, 'r') as in_key:
         key = in_key.read().strip('\n')
@@ -362,27 +382,34 @@ def main(inputFile, keyFile, mode, type, isBase64):
             else:
                 print(res)
         else:
-            res = decryption_mode_ECB(key, input_text, decrypt_aes)
+            if isBase64:
+                modified_text = base64.b64decode(input_text)
+            res = decryption_mode_ECB(key, modified_text, decrypt_aes)
             print(res)
     elif mode == "CBC":
         print("Please provide an input file for IV")
-        iv_f = input("IV File:")
+        iv_f = input("IV File (or None if you want to input from command line): ")
         iv_input = ""
-        if not os.path.exists(iv_f):
-            raise OSError("IV file does not exist")
-        with open(iv_f, 'r') as input_file:
-            iv_input = input_file.read()
-            iv_input.strip()
-            #if len(iv_input) != 16:
-            #    raise ValueError("IV input is not correct length for AES")
-        if type == "encrypt":
+        if iv_f == "None":
+            iv_input = input("Provide 16 digits, delimited by dashes: ")
+        else:
+            if not os.path.exists(iv_f):
+                raise OSError("IV file does not exist")
+            with open(iv_f, 'r') as input_file:
+                iv_input = input_file.read()
+                iv_input.strip()
+                #if len(iv_input) != 16:
+                #    raise ValueError("IV input is not correct length for AES")
+        if type_t == "encrypt":
             res = ENCRYPTION_CBC_MODE(iv_input, key, input_text, encrypt_aes)
             if isBase64:
                 print(base64.b64encode(res))
             else:
                 print(res)
         else:
-            res = DECRYPTION_CBC_MODE(iv_input, key, input_text, decrypt_aes)
+            if isBase64:
+                decoded_input = base64.b64decode(input_text)
+            res = DECRYPTION_CBC_MODE(iv_input, key, decoded_input, decrypt_aes)
             print(res)
     else:
         print("Mode {} has not been implemeted".format(mode))
@@ -393,11 +420,11 @@ if __name__ == "__main__":
         input_file = ""
         b64 = False
         mode = ""
-        type = ""
+        type_t = ""
         key = ""
         opts, other_args = getopt.getopt(sys.argv[1:], 'bi:m:t:k:')
     except getopt.GetoptError:
-        print("Format is python3 {} -i [input_file] -k [key file] -m [mode (ex. ECB)] -t [encrypt/decrypt] [-b]".format(sys.argv[0]))
+        print("Format is python3 {} -i [input_file] -k [key file] -m [mode (ex. ECB)] -t [encrypt/decrypt] [-b/--base64]".format(sys.argv[0]))
         sys.exit(1)
     for opt, arg in opts:
         if opt in ("-i", "--inputFile"):
@@ -405,12 +432,12 @@ if __name__ == "__main__":
         elif opt in ("-m", "--mode"):
             mode = arg
         elif opt in ("-t", "--type"):
-            type = arg
+            type_t = arg
         elif opt in ("-k", "--key"):
             key = arg
         elif opt in ("-b", "--base64"):
             b64 = True
     if input_file == "" or mode == "" or type =="":
-        print("Format is python3 {} -i [input_file] -k [key file] -m [mode (ex. ECB)] -t [encrypt/decrypt] [-b]".format(sys.argv[0]))
+        print("Format is python3 {} -i [input_file] -k [key file] -m [mode (ex. ECB)] -t [encrypt/decrypt] [-b/--base64]".format(sys.argv[0]))
         sys.exit(1)
-    main(input_file, key, mode, type, b64)
+    main(input_file, key, mode, type_t, b64)

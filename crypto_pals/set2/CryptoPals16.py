@@ -2,7 +2,7 @@ import sys
 import base64
 from crypto_pals.set1 import CryptoPals7
 from crypto_pals.set2.CryptoPals11 import generate_rand_AES_key, generate_rand_IV
-# LESSON: Not only is AES 128 in CBC mode possible to decrypt BUT it is also
+# LESSON: Not only is AES 128 in CBC mode w/ no auth possible to decrypt BUT it is also
 # malleable
 AES_KEY = generate_rand_AES_key()
 IV = generate_rand_IV()
@@ -27,6 +27,7 @@ def is_admin(enc_text):
     return False
 
 def main():
+    print("Beginning attack... ")
     normal_block = enc_user_data('a' * BLOCK_SIZE)
     encrypted_string = CryptoPals7.modify_list_into_GF28(normal_block[1 * BLOCK_SIZE: 2 * BLOCK_SIZE])
     a_string = CryptoPals7.modify_list_into_GF28('a' * 16)
@@ -36,7 +37,7 @@ def main():
         modified_block.append(encrypted_string[idx] + a_string[idx] + pt_string[idx])
     modified_text = CryptoPals7.GF28_to_string(modified_block)
     admin_text = normal_block[:BLOCK_SIZE] + modified_text + normal_block[2*BLOCK_SIZE:]
-    print(is_admin(admin_text))
+    print("Result of ciphertext on oracle is: {}".format(is_admin(admin_text)))
     return
 
 
