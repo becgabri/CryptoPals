@@ -56,7 +56,7 @@ def uncoverCorrectFileMac(filename):
         solely_times = list(map(lambda pair : pair[1], time_results))
         std_dev = statistics.stdev(solely_times)
         mean = statistics.mean(solely_times)
-        print("Population varies with from mean {} with a standard deviation of {}".format(std_dev, mean))
+        print("Population varies from mean {} with a standard deviation of {}".format(std_dev, mean))
         time_results.sort(reverse=True, key=lambda pair : pair[1])
 
         best_avg_time_byte_pair = (-1, None)
@@ -88,7 +88,7 @@ def main():
     if len(sys.argv) != 2:
         print("Correct usage is python3 {} [filename]".format(sys.argv[0]))
         return
-
+    
     web_proc = multiprocessing.Process(target=run_server, args=())
     # need to do some timing to make sure the server is up before sending the first request
     web_proc.start()

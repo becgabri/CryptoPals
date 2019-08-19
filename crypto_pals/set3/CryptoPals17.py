@@ -2,6 +2,7 @@ import random
 import sys
 import random
 import copy
+import base64
 from crypto_pals.set1 import CryptoPals7
 from crypto_pals.set2.CryptoPals11 import generate_rand_AES_key, generate_rand_IV
 from crypto_pals.set2.CryptoPals12 import find_block_size
@@ -44,7 +45,6 @@ def break_CBC_confidentiality():
     target, current_IV = encrypt_random_string()
 
     recovered_pt = ""
-    print("target length of string: {}".format(len(target)))
     for idx in range(0,len(target), block_size):
         current_text = ''
         if idx == 0:

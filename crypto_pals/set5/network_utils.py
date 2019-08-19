@@ -1,7 +1,7 @@
-SIZE_MESSAGE = struct.calcsize("i")
-NEW_PROTOCOL = 50021
 from crypto_pals.set1 import CryptoPals7
 from crypto_pals.set2 import CryptoPals11
+import struct
+SIZE_MESSAGE = struct.calcsize("i")
 
 # wrapper to do encryption for AES 128 bit 
 def decrypt(key, message):
@@ -94,7 +94,7 @@ def send_msg(message, socket_t, man_pipe=None, client_port_num=0):
        print("Sending proc has woken up")
        # this is simulating that the packet was dropped
        return 1
-    print("Attempting to send message")
+    #print("Attempting to send message")
     send_msg = PackForSending(message)
     msg_size = len(send_msg)
     sent = 0
@@ -102,7 +102,7 @@ def send_msg(message, socket_t, man_pipe=None, client_port_num=0):
         while sent < msg_size:
             managed_to_send = socket_t.send(send_msg[sent:])
             sent += managed_to_send
-        print("Succeeded in sending {} bytes: {}".format(sent, send_msg[:50]))
+        #print("Succeeded in sending {} bytes: {}".format(sent, send_msg[:50]))
         return 1
     except:
         print("Failed in attempt")
@@ -125,12 +125,13 @@ def receive_msg(socket_t):
             size, leftover = struct.unpack("i" + str(len(partial_scan_str) - SIZE_MESSAGE) + "s", partial_scan_str)
             msg_recovered = struct.unpack(str(len(partial_scan_str)) + "s", partial_scan_str)
             data_to_consume = size - len(leftover)
-            print("Data to consume is {}".format(size))
+            #print("Data to consume is {}, data left after this message is {}".format(size, data_to_consume))
             no_data = False
             msg_received += leftover
-            print(msg_received)
+            #print(msg_received)
         else:
             msg_received += first_half
             data_to_consume -= len(first_half)
-            print(msg_received)
+            #print("Message: {}, data left to consume {}".format(msg_received, data_to_consume))
+    #print("Exiting received function")
     return msg_received 

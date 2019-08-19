@@ -53,4 +53,5 @@ def main():
                         decrypt_text[idx][idx_str] =  (val[idx_str] + difference) % 256
 
 if __name__ == "__main__":
+    print("Functionality broken right now because of change to other cryptopals challenge")
     main()

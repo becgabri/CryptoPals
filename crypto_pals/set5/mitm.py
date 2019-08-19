@@ -6,7 +6,7 @@ def man_in_the_middle(server_pipe, client_pipe):
     # .... so do I wait for them to try and send things across the wire??
     # maybe???? .... have them send a signal? 
     # wait until a signal is sent, check the client pipe and server pipe 
-    # for data, figure out the stage of the program and send the appropriate msgi
+    # for data, figure out the stage of the program and send the appropriate msg
     prime = 0
 
     # this base will be 0 no matter what because it is p*k for some 

@@ -38,7 +38,6 @@ def crack_seed(ciphertext):
     idx = 0
     byte_msk = (1 << 8) - 1
     for i in range(len(ciphertext) - 14, len(ciphertext)):
-        print("{}".format(i))
         # add to 32 bit num result from generator
         recovered_block = ciphertext[i] ^ ord('A')
         recover_32 = recover_32 | (recovered_block << (8 * (3 - (i % 4))))
@@ -83,9 +82,10 @@ def main():
     pt_bytes = bytes(plaintext, encoding='utf-8')
     print("Plaintext is: {}".format(pt_bytes))
     ciphertext = mersenne_stream_ciper(key, pt_bytes)
-    print("Trying to crack cipher. First Try: Brute force binary search")
+    print("Ciphertext is: {}".format(ciphertext))
+    print("Trying to crack cipher.")
     crack_s = crack_seed(ciphertext)
-    print("{}".format(crack_s))
+    print("Seed should be: {}".format(crack_s))
 
 
 if __name__ == "__main__":

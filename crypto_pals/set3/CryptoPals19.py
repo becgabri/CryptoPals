@@ -1,6 +1,6 @@
 import base64
 import sys
-from crypto_pals.set1 import CryptoPals1
+from crypto_pals.set1 import CryptoPals2
 from crypto_pals.set3 import CryptoPals18
 from crypto_pals.set2.CryptoPals11 import generate_rand_AES_key
 from crypto_pals.set1 import CryptoPals7
@@ -33,7 +33,7 @@ def decode_and_encr(list_of_strings):
     zero_nonce = bytearray([0] * (BLOCK_SIZE // 2))
     for idx, curr_string in enumerate(list_of_strings):
         txt = base64.b64decode(curr_string)
-        list_of_strings[idx] = CryptoPals18.CTR_ENCRYPTION_MODE(CryptoPals7.encrypt_aes, txt, AES_KEY, nonce=zero_nonce)
+        list_of_strings[idx] = CryptoPals18.CTR_ENCRYPTION_MODE(CryptoPals7.encrypt_aes, txt, AES_KEY, CryptoPals18.counter_function, nonce=zero_nonce)
 
 
 def main():

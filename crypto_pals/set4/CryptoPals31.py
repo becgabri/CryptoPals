@@ -60,7 +60,9 @@ def insecure_compare(arg1, arg2):
     for i in range(len(arg1)):
         if arg1[i] != arg2[i]:
             return False 
+        # Time for CryptoPals attack 31
         #time.sleep(.050)
+        # Time for CryptoPals attack 32
         time.sleep(.005)
     return True
         

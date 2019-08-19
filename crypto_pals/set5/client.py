@@ -1,5 +1,6 @@
 from network_utils import *
-import CrytpoPals33
+import crypto_pals.set5.CryptoPals33 as CryptoPals33
+import sys
 SERVER_HOST = "192.168.0.8"
 
 # acts as Alice -- this will be the client
@@ -40,7 +41,7 @@ def client(msg, mitm_pipe=None):
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage is incorrect. Correct usage is: python3 {} [f|s] [filename | string]".format())
+        print("Usage is incorrect. Correct usage is: python3 {} [f|s] [filename | string]".format(sys.argv[0]))
         sys.exit(1)
 
     fileOrString = sys.argv[1]
@@ -53,4 +54,4 @@ if __name__ == "__main__":
     elif fileOrString == "s":
         client(filenameOrString)
     else:
-        print("Usage is incorrect. Correct usage is: python3 {} [f|s] [filename | string]")
+        print("Usage is incorrect. Correct usage is: python3 {} [f|s] [filename | string]".format(sys.argv[0]))

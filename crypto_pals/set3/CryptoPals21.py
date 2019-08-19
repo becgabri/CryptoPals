@@ -64,9 +64,9 @@ class MersenneTwister19937:
 
 def main():
     twister = MersenneTwister19937(1)
-    random.seed(1)
-    #r1 = random.getstate()
-    #twister.state = list(r1[1][:-1])
+    random.seed(0b1)
+    r0 = random.getstate()
+    
     for poll in range(0,5):
         extracted_value = twister.extract_num()
         print("Poll Number {} with twister value {}".format(poll, extracted_value))
@@ -75,6 +75,7 @@ def main():
         # extract from python random library as much as a word 32 bits
         extract = random.getrandbits(32)
         print("Extracted from random library twister value of {}".format(extract))
+    print("*** Results are not the same because seed initialization differs")
     return
 
 if __name__ == "__main__":
