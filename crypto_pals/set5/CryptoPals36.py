@@ -32,27 +32,33 @@ def server_setup():
     global v
     # generate salt 
     SALT = (random.getrandbits(64)).to_bytes(8, byteorder='big')
+    v = generate_v(SALT, PASSWORD)
+    return
+
+def generate_v(salt, password):
     sha256_string = sha256.SHA256()
-    salt_hash_concat = "{}||{}".format(SALT,PASSWORD)
+    salt_hash_concat = "{}||{}".format(salt,password)
     sha256_string.Update(bytes(salt_hash_concat, encoding='utf-8'))
     x = sha256_string.Sum()
     # this is a random numerical value -- not a string although it should be one
     v = GroupOp.mod_exp(GENERATOR, x, MODPGROUP["1536"])
-    return
+    return v
 
-def server_srp(client_sock):
+def server_srp(client_sock, email_held=None, salt=None, v_held=-1):
     # try and receive msg from pipe
     b = secrets.randbelow(MODPGROUP["1536"])
     client_msg = (net_utils.receive_msg(client_sock)).decode('utf-8')
     args = client_msg.split(",")
     email = args[1][:-1]
     client_key_share = int(args[0][1:])
-    if email == EMAIL:
+
+    if email == email_held:
         g_with_b = GroupOp.mod_exp(GENERATOR, b, MODPGROUP["1536"])
-        maskedv = (K * v + g_with_b) % MODPGROUP["1536"]
-        server_msg = "({},{})".format(SALT, maskedv)
+        maskedv = (K * v_held + g_with_b) % MODPGROUP["1536"]
+        server_msg = "({},{})".format(salt, maskedv)
     else:
         server_msg = "ERROR"
+
     
     if not net_utils.send_msg(server_msg, client_sock):
         raise ValueError("Failed writing to pipe")
@@ -61,20 +67,21 @@ def server_srp(client_sock):
     u_hash = sha256.SHA256()
     u_hash.Update(bytes("{}||{}".format(client_key_share, maskedv), encoding='utf-8'))
     u = u_hash.Sum()
-    
-    total = GroupOp.mod_exp(v,u,MODPGROUP["1536"])
+
+    total = GroupOp.mod_exp(v_held,u,MODPGROUP["1536"])
     total = (total *  client_key_share) % MODPGROUP["1536"]
     total = GroupOp.mod_exp(total, b, MODPGROUP["1536"])
     key_digest = sha256.SHA256()
     key_digest.Update(bytes("{}".format(total), encoding='utf-8'))
     actual_key = (key_digest.Sum()).to_bytes(256 // 8,byteorder='big')
-    check_against = hmac_myimpl.SHA256_HMAC(actual_key, SALT)
+
+    check_against = hmac_myimpl.SHA256_HMAC(actual_key, salt)
+
     # this comparison is very insecure
     if client_hmac_val == check_against:
-        print("SUCCESS\n")
+        return True
     else:
-        print("FAILED\n")
-    return
+        return False
         
 def client():
     client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

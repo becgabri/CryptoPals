@@ -2,7 +2,8 @@ import sys
 import socket
 import threading
 
-CLIENT_HOST = "192.168.0.4"
+HOST = "127.0.0.1"
+PROTOCOL = 4509
 
 def server(server_func, HOST, PROTOCOL):
     print("Server proc running")
