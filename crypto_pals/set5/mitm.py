@@ -1,6 +1,8 @@
 from network_utils import *
 from crypto_pals.set4 import SHA1
-IFACE="eth2"
+from scapy.all import *
+
+IFACE="lo"
 
 def man_in_the_middle(server_pipe, client_pipe):
     # .... so do I wait for them to try and send things across the wire??
@@ -82,7 +84,7 @@ def man_in_the_middle(server_pipe, client_pipe):
                     pkt_to_process[TCP].chksum = new_chksum
 
                     #ack_data = ack_data / TCP(dport=port, sport=NEW_PROTOCOL, flags="A", seq=mitm_packets_captured[0][TCP].ack, ack=mitm_packets_captured[0][TCP].seq + )
-                    pkt_to_process = srp1(pkt_to_process, iface=IFACE)
+                    pkt_to_process = sr1(pkt_to_process, iface=IFACE)
                     #pkt_to_process = None
                     print("Packet received was the following: ")
                     pkt_to_process.show()
@@ -140,7 +142,7 @@ def man_in_the_middle(server_pipe, client_pipe):
                     new_pkt.show()
                     print ("Sending packet")
                     # what should I do here? sendp
-                    pkt_to_process = srp1(new_pkt, iface=IFACE)
+                    pkt_to_process = sr1(new_pkt, iface=IFACE)
                     
                     print("Packet received was the following: ")
                     pkt_to_process.show()

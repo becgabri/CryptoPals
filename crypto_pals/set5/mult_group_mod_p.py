@@ -1,3 +1,5 @@
+#import secrets ( don't need to use this library for now :P)
+import random 
 # Contains fast exponentiation implementation and other functions for working with 
 # groups
 
@@ -21,7 +23,8 @@ def millerRabinPrimalityTest(number_to_tst):
         prime_powers = prime_powers >> 1
 
     for iteration in range(10):
-        test_base = secrets.randbelow(number_to_tst)
+        test_base = random.randrange(number_to_tst)
+        #secrets.randbelow(number_to_tst)
         current_it = prime_powers
         up_base = mod_exp(test_base, current_it, number_to_tst)
         if up_base == 1 or up_base == (number_to_tst - 1):
@@ -39,11 +42,12 @@ def millerRabinPrimalityTest(number_to_tst):
     return True
 
 def generate_prime_and_generator():
-    prime = 256
+    prime = 2**256
     prime += random.getrandbits(256)
     while prime % 2 == 0 or millerRabinPrimalityTest(prime):
-        prime = 256
+        prime = 2**256
         prime += random.getrandbits(256)
-    # this is not a safe prime 
+    # this is not a safe prime, this is not necessarily a generator
+    # for the whole group !!!
     generator = random.randrange(prime)
     return (prime, generator)

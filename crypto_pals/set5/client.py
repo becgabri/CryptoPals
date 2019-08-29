@@ -1,8 +1,9 @@
 from network_utils import *
 import crypto_pals.set5.CryptoPals33 as CryptoPals33
 import sys
-SERVER_HOST = "192.168.0.8"
-
+SERVER_HOST = "127.0.0.1"
+HOST = "127.0.0.1"
+NEW_PROTOCOL = 4509
 # acts as Alice -- this will be the client
 # produces the group and generator for Z_p and sends to Bob
 # p (group) as in Z_p, g as the generator, and A = g**a mod Z_p

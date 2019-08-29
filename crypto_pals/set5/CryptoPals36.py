@@ -6,6 +6,7 @@ import secrets
 import random
 import network_utils as net_utils
 import server
+import time
 import socket
 import sha256
 import hmac_myimpl
@@ -24,7 +25,7 @@ K = 3
 EMAIL = "something"
 PASSWORD = b"password123"
 v = 0 
-PROTOCOL = 63030
+PROTOCOL = 49153
 HOST = "127.0.0.1"
 
 def server_setup():
@@ -44,7 +45,7 @@ def generate_v(salt, password):
     v = GroupOp.mod_exp(GENERATOR, x, MODPGROUP["1536"])
     return v
 
-def server_srp(client_sock, email_held=None, salt=None, v_held=-1):
+def server_srp(client_sock, email_held, salt, v_held):
     # try and receive msg from pipe
     b = secrets.randbelow(MODPGROUP["1536"])
     client_msg = (net_utils.receive_msg(client_sock)).decode('utf-8')
@@ -57,6 +58,7 @@ def server_srp(client_sock, email_held=None, salt=None, v_held=-1):
         maskedv = (K * v_held + g_with_b) % MODPGROUP["1536"]
         server_msg = "({},{})".format(salt, maskedv)
     else:
+        print("Server received wrong email identifier")
         server_msg = "ERROR"
 
     
@@ -79,6 +81,7 @@ def server_srp(client_sock, email_held=None, salt=None, v_held=-1):
 
     # this comparison is very insecure
     if client_hmac_val == check_against:
+        print("{} client succesfully authenticated".format(email_held))
         return True
     else:
         return False
@@ -113,12 +116,10 @@ def client():
     verification_check = hmac_myimpl.SHA256_HMAC(actual_key, salt)
     if not net_utils.send_msg(verification_check, client_sock):
         raise ValueError("Could not send over pipe")
-    print("Finishing client thread")
 
 def main():
     server_setup()
-    print("Finished Server Set up")
-    server_thread = Process(target=server.server, args=(server_srp, HOST, PROTOCOL))
+    server_thread = Process(target=server.server, args=(server_srp, HOST, PROTOCOL, EMAIL, SALT, v))
     client_thread = Process(target=client, args=())
     server_thread.start()
     client_thread.start()
