@@ -13,7 +13,7 @@ def crt_reconstruct(modulus_one, modulus_two, modulus_three, rem_one, rem_two, r
         (modulus_two*modulus_three) + \
         (modulus_one*modulus_three)
     crt_factor = crt_factor % large_mod
-    crt_factor_inv = RSAOps.find_inverse(crt_factor, large_mod)
+    crt_factor_inv = GroupOp.find_inverse(crt_factor, large_mod)
     mod_one_factor = (crt_factor_inv * modulus_two* modulus_three * rem_one) 
     mod_two_factor = (crt_factor_inv * modulus_three * modulus_one * rem_two)
     mod_three_factor = (crt_factor_inv * modulus_two * modulus_one * rem_three)
