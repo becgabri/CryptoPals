@@ -24,7 +24,7 @@ def millerRabinPrimalityTest(number_to_tst):
         powers_of_two += 1
         prime_powers = prime_powers >> 1
 
-    for iteration in range(15):
+    for iteration in range(6):
         test_base = random.randrange(number_to_tst)
         #secrets.randbelow(number_to_tst)
         current_it = prime_powers
