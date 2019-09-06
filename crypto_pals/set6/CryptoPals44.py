@@ -48,7 +48,6 @@ def main():
         exp_k = (exp_k * inv_s_elt) % challenge_params["q"]
         recovered_x = CP43.AttackerWithKnownSubKeyK(challenge_params, challenge_public_key,
          exp_k, dict1["msg"], (dict1["r"], dict1["s"]), dict1["m"])
-        import pdb; pdb.set_trace()
         key_hash_obj = sha1.SHA1()
         key_hash_obj.Update(hex(recovered_x)[2:])
         key = int.from_bytes(key_hash_obj.Sum(), byteorder="big")
